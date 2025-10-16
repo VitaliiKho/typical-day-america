@@ -32,7 +32,6 @@
             text-align: center;
             transition: background 0.4s ease;
             overflow-x: hidden;
-            /* Чтобы body мог ловить клавиши */
             outline: none;
         }
 
@@ -475,7 +474,6 @@
                     return;
                 }
                 try {
-                    // ИСПРАВЛЕНО: убраны пробелы в конце URL!
                     const res = await fetch('https://api.countapi.xyz/hit/tipichny_day_final_v5/visits');
                     const data = await res.json();
                     visitorsEl.textContent = lang === 'ru' ? `Сайт посетили ${data.value} раз(а)` : `Visitors: ${data.value}`;
@@ -543,7 +541,7 @@
                 setTimeout(() => document.body.classList.remove('shake'), 600);
             }
 
-            // Обработчики событий
+            // === Обработчики кнопок ===
             boomBtn.addEventListener('click', () => createExplosion());
             restartBtn.addEventListener('click', resetGame);
 
@@ -589,8 +587,31 @@
                 });
             });
 
-            // Переключение музыки
+            // === 📱 Секрет на телефоне: 10 нажатий на "Муз." ===
+            let musicClickCount = 0;
+            let lastMusicClickTime = 0;
+            const MUSIC_SECRET_THRESHOLD = 10;
+            const MUSIC_SECRET_TIMEOUT = 5000; // 5 секунд
+
             musicBtn.addEventListener('click', () => {
+                const now = Date.now();
+                if (now - lastMusicClickTime > MUSIC_SECRET_TIMEOUT) {
+                    musicClickCount = 0;
+                }
+                musicClickCount++;
+                lastMusicClickTime = now;
+
+                if (musicClickCount >= MUSIC_SECRET_THRESHOLD) {
+                    musicClickCount = 0; // сброс
+                    boomCount = 10000000;
+                    localStorage.setItem('boomCount', boomCount.toString());
+                    counterEl.textContent = translations[lang].counter(boomCount);
+                    createExplosion(true);
+                    console.log("📱 Мобильный секрет активирован! 10 000 000 бумов!");
+                    return; // не переключаем музыку
+                }
+
+                // Обычное переключение музыки
                 isMusicOn = !isMusicOn;
                 localStorage.setItem('music', isMusicOn ? 'on' : 'off');
                 updateText();
@@ -600,35 +621,28 @@
                 }
             });
 
-        // ✅ Konami код: ← → ← → ↑ ↓ ↑ ↓ — даёт 10 000 000 бумов!
-const secretSequence = ['ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'ArrowUp', 'ArrowDown'];
-let inputSequence = [];
+            // === 🖥️ Konami-код на ПК ===
+            const secretSequence = ['ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'ArrowUp', 'ArrowDown'];
+            let inputSequence = [];
 
-document.addEventListener('keydown', (e) => {
-    const key = e.code;
-    if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(key)) return;
+            document.addEventListener('keydown', (e) => {
+                const key = e.code;
+                if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(key)) return;
 
-    inputSequence.push(key);
-    if (inputSequence.length > secretSequence.length) {
-        inputSequence.shift();
-    }
+                inputSequence.push(key);
+                if (inputSequence.length > secretSequence.length) {
+                    inputSequence.shift();
+                }
 
-    if (inputSequence.join(',') === secretSequence.join(',')) {
-        // Устанавливаем 10 миллионов бумов
-        boomCount = 10000000;
-        localStorage.setItem('boomCount', boomCount.toString());
-        counterEl.textContent = translations[lang].counter(boomCount);
-
-        // Визуальный и звуковой эффект: ядерный бум!
-        createExplosion(true);
-
-        // Опционально: сообщение в консоль или на экран
-        console.log("🎉 Поздравляем! Вы достигли 10 000 000 бумов!");
-
-        // Сбрасываем ввод
-        inputSequence = [];
-    }
-});
+                if (inputSequence.join(',') === secretSequence.join(',')) {
+                    boomCount = 10000000;
+                    localStorage.setItem('boomCount', boomCount.toString());
+                    counterEl.textContent = translations[lang].counter(boomCount);
+                    createExplosion(true);
+                    inputSequence = [];
+                    console.log("🔥 Konami код активирован! 10 000 000 бумов!");
+                }
+            });
 
             // Инициализация
             applyTheme(currentTheme);
@@ -646,6 +660,3 @@ document.addEventListener('keydown', (e) => {
     </script>
 </body>
 </html>
-
-
-
