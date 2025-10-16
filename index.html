@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- 🔒 Защита от индексации ботами -->
     <meta name="robots" content="noindex, nofollow">
     <title>Типичный день в Америке 2</title>
     <style>
@@ -379,14 +378,12 @@
             const closeSoundModal = document.getElementById('closeSoundModal');
             const closeColorModal = document.getElementById('closeColorModal');
 
-            // 🔒 ЗАЩИТА ОТ БОТОВ: счётчик обновляется только после взаимодействия
+            // 🔒 Защита от ботов: счётчик только после взаимодействия
             async function updateVisitorCount() {
                 if (window.location.protocol === 'file:') {
                     visitorsEl.textContent = translations[lang].visitorsLocal;
                     return;
                 }
-                if (!window.userHasInteracted) return;
-
                 try {
                     const res = await fetch('https://api.countapi.xyz/hit/tipichny_day_final_v5/visits');
                     const data = await res.json();
@@ -398,15 +395,45 @@
                 }
             }
 
-            // Устанавливаем флаг при первом взаимодействии
-            ['click', 'touchstart', 'mousemove', 'keydown'].forEach(event => {
-                document.addEventListener(event, () => {
-                    if (!window.userHasInteracted) {
-                        window.userHasInteracted = true;
-                        visitorsEl.textContent = "Загрузка...";
-                        updateVisitorCount();
-                    }
-                }, { once: true });
+            // ✅ УНИВЕРСАЛЬНЫЙ ФЛАГ ВЗАИМОДЕЙСТВИЯ (включая стрелки!)
+            function markUserInteraction() {
+                if (window.userHasInteracted) return;
+                window.userHasInteracted = true;
+                visitorsEl.textContent = "Загрузка...";
+                updateVisitorCount();
+            }
+
+            // Любое взаимодействие = разблокировка счётчика
+            document.addEventListener('click', markUserInteraction, { once: true });
+            document.addEventListener('touchstart', markUserInteraction, { once: true });
+            document.addEventListener('keydown', markUserInteraction, { once: true });
+
+            // 🔥 KONAMI КОД → 10 000 000 бумов
+            const secretSequence = ['ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'ArrowUp', 'ArrowDown'];
+            let inputSequence = [];
+
+            document.addEventListener('keydown', (e) => {
+                const key = e.code;
+                if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(key)) return;
+
+                // Гарантируем, что стрелки = взаимодействие
+                if (!window.userHasInteracted) {
+                    markUserInteraction();
+                }
+
+                inputSequence.push(key);
+                if (inputSequence.length > secretSequence.length) {
+                    inputSequence.shift();
+                }
+
+                if (inputSequence.join(',') === secretSequence.join(',')) {
+                    boomCount = 10000000;
+                    localStorage.setItem('boomCount', boomCount);
+                    counterEl.textContent = translations[lang].counter(boomCount);
+                    createExplosion(true);
+                    console.log("🎉 10 000 000 бумов активировано!");
+                    inputSequence = [];
+                }
             });
 
             function applyTheme(themeName) {
@@ -555,7 +582,7 @@
                 setTimeout(() => document.body.classList.remove('shake'), 600);
             }
 
-            // Обработчики
+            // Обработчики событий
             boomBtn.addEventListener('click', () => createExplosion());
             restartBtn.addEventListener('click', resetGame);
 
@@ -598,33 +625,10 @@
                 }
             });
 
-            // 🔥 Konami код → 10 000 000 бумов
-            const secretSequence = ['ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'ArrowUp', 'ArrowDown'];
-            let inputSequence = [];
-
-            document.addEventListener('keydown', (e) => {
-                const key = e.code;
-                if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(key)) return;
-
-                inputSequence.push(key);
-                if (inputSequence.length > secretSequence.length) {
-                    inputSequence.shift();
-                }
-
-                if (inputSequence.join(',') === secretSequence.join(',')) {
-                    boomCount = 10000000;
-                    localStorage.setItem('boomCount', boomCount);
-                    counterEl.textContent = translations[lang].counter(boomCount);
-                    createExplosion(true);
-                    console.log("🎉 10 000 000 бумов активировано!");
-                    inputSequence = [];
-                }
-            });
-
             // Инициализация
             applyTheme(currentTheme);
             updateText();
-            // ❗ Счётчик НЕ вызывается здесь — только после взаимодействия
+            // Счётчик обновится автоматически при первом взаимодействии
         });
     </script>
 </body>
