@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="robots" content="noindex, nofollow">
     <title>Типичный день в Америке 2</title>
     <style>
         :root {
@@ -236,7 +235,7 @@
     <div class="container">
         <h1 id="title">Типичный день в Америке 2</h1>
         <div id="sound-label">Текущий звук: Оригинальный</div>
-        <div id="visitors" class="info">Ожидание взаимодействия...</div>
+        <div id="visitors" class="info">Загрузка счётчика...</div>
         <div id="counter" class="info">Вы устроили бум 0 раз(а)</div>
         <button class="boom-button" id="boomBtn" type="button">Сделать бум!</button>
         <div id="quote"></div>
@@ -279,6 +278,7 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // Цветовые темы
             const themes = {
                 default: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
                 light: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
@@ -302,7 +302,7 @@
                     },
                     boomBtn: "Сделать бум!",
                     restartBtn: "Рестарт",
-                    visitorsLocal: "💡 Счётчик заработает после публикации",
+                    visitorsLocal: "💡 Счётчик посещений заработает после публикации сайта в интернете",
                     counter: (n) => `Вы устроили бум ${n} раз(а)`,
                     disclaimer: `⚠️ Внимание: данный сайт является художественным проектом и не имеет отношения к реальности. Все события, персонажи и высказывания — вымышлены. Автор не призывает к насилию, разрушениям, нарушению закона или любым другим действиям. «Бум» — это метафора, а не руководство к действию.`,
                     quotes: [
@@ -331,7 +331,7 @@
                     },
                     boomBtn: "Make it boom!",
                     restartBtn: "Restart",
-                    visitorsLocal: "💡 Counter works after publishing",
+                    visitorsLocal: "💡 Visitor counter will work after publishing the site online",
                     counter: (n) => `You've boomed ${n} time(s)`,
                     disclaimer: `⚠️ Disclaimer: This website is a fictional art project. All events, characters, and statements are imaginary. The author does not encourage violence, destruction, law-breaking, or any harmful actions. "Boom" is a metaphor, not a guide.`,
                     quotes: [
@@ -361,6 +361,7 @@
             let boomCount = parseInt(localStorage.getItem('boomCount')) || 0;
             let audioContext = null;
 
+            // DOM
             const titleEl = document.getElementById('title');
             const soundLabelEl = document.getElementById('sound-label');
             const visitorsEl = document.getElementById('visitors');
@@ -378,70 +379,14 @@
             const closeSoundModal = document.getElementById('closeSoundModal');
             const closeColorModal = document.getElementById('closeColorModal');
 
-            // 🔒 Защита от ботов: счётчик только после взаимодействия
-            async function updateVisitorCount() {
-                if (window.location.protocol === 'file:') {
-                    visitorsEl.textContent = translations[lang].visitorsLocal;
-                    return;
-                }
-                try {
-                    const res = await fetch('https://api.countapi.xyz/hit/tipichny_day_final_v5/visits');
-                    const data = await res.json();
-                    visitorsEl.textContent = lang === 'ru' 
-                        ? `Сайт посетили ${data.value} раз(а)` 
-                        : `Visitors: ${data.value}`;
-                } catch (e) {
-                    visitorsEl.textContent = lang === 'ru' ? "Счётчик недоступен" : "Counter unavailable";
-                }
-            }
-
-            // ✅ УНИВЕРСАЛЬНЫЙ ФЛАГ ВЗАИМОДЕЙСТВИЯ (включая стрелки!)
-            function markUserInteraction() {
-                if (window.userHasInteracted) return;
-                window.userHasInteracted = true;
-                visitorsEl.textContent = "Загрузка...";
-                updateVisitorCount();
-            }
-
-            // Любое взаимодействие = разблокировка счётчика
-            document.addEventListener('click', markUserInteraction, { once: true });
-            document.addEventListener('touchstart', markUserInteraction, { once: true });
-            document.addEventListener('keydown', markUserInteraction, { once: true });
-
-            // 🔥 KONAMI КОД → 10 000 000 бумов
-            const secretSequence = ['ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'ArrowUp', 'ArrowDown'];
-            let inputSequence = [];
-
-            document.addEventListener('keydown', (e) => {
-                const key = e.code;
-                if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(key)) return;
-
-                // Гарантируем, что стрелки = взаимодействие
-                if (!window.userHasInteracted) {
-                    markUserInteraction();
-                }
-
-                inputSequence.push(key);
-                if (inputSequence.length > secretSequence.length) {
-                    inputSequence.shift();
-                }
-
-                if (inputSequence.join(',') === secretSequence.join(',')) {
-                    boomCount = 10000000;
-                    localStorage.setItem('boomCount', boomCount);
-                    counterEl.textContent = translations[lang].counter(boomCount);
-                    createExplosion(true);
-                    console.log("🎉 10 000 000 бумов активировано!");
-                    inputSequence = [];
-                }
-            });
-
+            // Применить тему
             function applyTheme(themeName) {
                 document.body.style.background = themes[themeName] || themes.default;
                 currentTheme = themeName;
                 localStorage.setItem('colorTheme', themeName);
             }
 
+            // Аудио
             function initAudio() {
                 if (audioContext) return;
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -523,6 +468,20 @@
                 counterEl.textContent = t.counter(boomCount);
             }
 
+            async function updateVisitorCount() {
+                if (window.location.protocol === 'file:') {
+                    visitorsEl.textContent = translations[lang].visitorsLocal;
+                    return;
+                }
+                try {
+                    const res = await fetch('https://api.countapi.xyz/hit/tipichny_day_final_v5/visits');
+                    const data = await res.json();
+                    visitorsEl.textContent = lang === 'ru' ? `Сайт посетили ${data.value} раз(а)` : `Visitors: ${data.value}`;
+                } catch (e) {
+                    visitorsEl.textContent = lang === 'ru' ? "Счётчик недоступен" : "Counter unavailable";
+                }
+            }
+
             function createExplosion(isNuclear = false) {
                 if (isNuclear) {
                     playNuclearSound();
@@ -582,7 +541,7 @@
                 setTimeout(() => document.body.classList.remove('shake'), 600);
             }
 
-            // Обработчики событий
+            // === Обработчики кнопок ===
             boomBtn.addEventListener('click', () => createExplosion());
             restartBtn.addEventListener('click', resetGame);
 
@@ -590,14 +549,26 @@
                 lang = lang === 'ru' ? 'en' : 'ru';
                 localStorage.setItem('lang', lang);
                 updateText();
-                if (window.userHasInteracted) updateVisitorCount();
+                updateVisitorCount();
             });
 
-            soundBtn.addEventListener('click', () => soundModal.style.display = 'block');
-            closeSoundModal.addEventListener('click', () => soundModal.style.display = 'none');
-            colorBtn.addEventListener('click', () => colorModal.style.display = 'block');
-            closeColorModal.addEventListener('click', () => colorModal.style.display = 'none');
+            soundBtn.addEventListener('click', () => {
+                soundModal.style.display = 'block';
+            });
 
+            closeSoundModal.addEventListener('click', () => {
+                soundModal.style.display = 'none';
+            });
+
+            colorBtn.addEventListener('click', () => {
+                colorModal.style.display = 'block';
+            });
+
+            closeColorModal.addEventListener('click', () => {
+                colorModal.style.display = 'none';
+            });
+
+            // Выбор звука
             document.querySelectorAll('#soundModal input[name="sound"]').forEach(radio => {
                 radio.addEventListener('change', (e) => {
                     currentSoundMode = e.target.value;
@@ -607,6 +578,7 @@
                 });
             });
 
+            // Выбор темы
             document.querySelectorAll('.color-option').forEach(option => {
                 option.addEventListener('click', () => {
                     const theme = option.dataset.theme;
@@ -615,7 +587,31 @@
                 });
             });
 
+            // === 📱 Секрет на телефоне: 10 нажатий на "Муз." ===
+            let musicClickCount = 0;
+            let lastMusicClickTime = 0;
+            const MUSIC_SECRET_THRESHOLD = 10;
+            const MUSIC_SECRET_TIMEOUT = 5000; // 5 секунд
+
             musicBtn.addEventListener('click', () => {
+                const now = Date.now();
+                if (now - lastMusicClickTime > MUSIC_SECRET_TIMEOUT) {
+                    musicClickCount = 0;
+                }
+                musicClickCount++;
+                lastMusicClickTime = now;
+
+                if (musicClickCount >= MUSIC_SECRET_THRESHOLD) {
+                    musicClickCount = 0; // сброс
+                    boomCount = 10000000;
+                    localStorage.setItem('boomCount', boomCount.toString());
+                    counterEl.textContent = translations[lang].counter(boomCount);
+                    createExplosion(true);
+                    console.log("📱 Мобильный секрет активирован! 10 000 000 бумов!");
+                    return; // не переключаем музыку
+                }
+
+                // Обычное переключение музыки
                 isMusicOn = !isMusicOn;
                 localStorage.setItem('music', isMusicOn ? 'on' : 'off');
                 updateText();
@@ -625,10 +621,41 @@
                 }
             });
 
+            // === 🖥️ Konami-код на ПК ===
+            const secretSequence = ['ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'ArrowUp', 'ArrowDown'];
+            let inputSequence = [];
+
+            document.addEventListener('keydown', (e) => {
+                const key = e.code;
+                if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(key)) return;
+
+                inputSequence.push(key);
+                if (inputSequence.length > secretSequence.length) {
+                    inputSequence.shift();
+                }
+
+                if (inputSequence.join(',') === secretSequence.join(',')) {
+                    boomCount = 10000000;
+                    localStorage.setItem('boomCount', boomCount.toString());
+                    counterEl.textContent = translations[lang].counter(boomCount);
+                    createExplosion(true);
+                    inputSequence = [];
+                    console.log("🔥 Konami код активирован! 10 000 000 бумов!");
+                }
+            });
+
             // Инициализация
             applyTheme(currentTheme);
             updateText();
-            // Счётчик обновится автоматически при первом взаимодействии
+            updateVisitorCount();
+
+            // Запуск фоновой музыки при первом взаимодействии
+            document.body.addEventListener('click', () => {
+                if (isMusicOn && !audioContext) {
+                    initAudio();
+                    playBackgroundMusic();
+                }
+            }, { once: true });
         });
     </script>
 </body>
