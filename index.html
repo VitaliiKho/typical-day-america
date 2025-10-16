@@ -600,25 +600,35 @@
                 }
             });
 
-            // ✅ Konami код: ← → ← → ↑ ↓ ↑ ↓ (современный способ)
-            const secretSequence = ['ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'ArrowUp', 'ArrowDown'];
-            let inputSequence = [];
+        // ✅ Konami код: ← → ← → ↑ ↓ ↑ ↓ — даёт 10 000 000 бумов!
+const secretSequence = ['ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'ArrowUp', 'ArrowDown'];
+let inputSequence = [];
 
-            document.addEventListener('keydown', (e) => {
-                const key = e.code;
-                if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(key)) return;
+document.addEventListener('keydown', (e) => {
+    const key = e.code;
+    if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(key)) return;
 
-                inputSequence.push(key);
-                if (inputSequence.length > secretSequence.length) {
-                    inputSequence.shift();
-                }
+    inputSequence.push(key);
+    if (inputSequence.length > secretSequence.length) {
+        inputSequence.shift();
+    }
 
-                if (inputSequence.join(',') === secretSequence.join(',')) {
-                    createExplosion(true); // Ядерный бум!
-                    inputSequence = [];
-                    console.log("🔥 Konami код активирован!");
-                }
-            });
+    if (inputSequence.join(',') === secretSequence.join(',')) {
+        // Устанавливаем 10 миллионов бумов
+        boomCount = 10000000;
+        localStorage.setItem('boomCount', boomCount.toString());
+        counterEl.textContent = translations[lang].counter(boomCount);
+
+        // Визуальный и звуковой эффект: ядерный бум!
+        createExplosion(true);
+
+        // Опционально: сообщение в консоль или на экран
+        console.log("🎉 Поздравляем! Вы достигли 10 000 000 бумов!");
+
+        // Сбрасываем ввод
+        inputSequence = [];
+    }
+});
 
             // Инициализация
             applyTheme(currentTheme);
@@ -636,3 +646,4 @@
     </script>
 </body>
 </html>
+
