@@ -68,7 +68,6 @@
             transform: scale(1.05);
         }
 
-        /* Возврат языка в центр */
         .lang-toggle {
             position: absolute;
             left: 50%;
@@ -397,7 +396,7 @@
                 return;
             }
             try {
-                const res = await fetch('https://api.countapi.xyz/hit/tipichny_day_fixed_v3/visits');
+                const res = await fetch('https://api.countapi.xyz/hit/tipichny_day_final_v4/visits');
                 const data = await res.json();
                 visitorsEl.textContent = lang === 'ru' ? `Сайт посетили ${data.value} раз(а)` : `Visitors: ${data.value}`;
             } catch (e) {
