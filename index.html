@@ -32,6 +32,8 @@
             text-align: center;
             transition: background 0.4s ease;
             overflow-x: hidden;
+            /* Чтобы body мог ловить клавиши */
+            outline: none;
         }
 
         .top-bar {
@@ -44,7 +46,6 @@
             align-items: center;
             padding: 0 16px;
             z-index: 100;
-            /* УБРАНО: pointer-events: none; — это мешало кликам */
         }
 
         .sound-toggle, .theme-toggle, .lang-toggle, .music-toggle, .color-toggle {
@@ -159,7 +160,6 @@
             padding: 15px;
         }
 
-        /* Меню цветов */
         #colorModal {
             display: none;
             position: fixed;
@@ -223,7 +223,7 @@
         }
     </style>
 </head>
-<body>
+<body tabindex="0">
     <div class="top-bar">
         <button class="sound-toggle" id="soundBtn">Звук</button>
         <button class="lang-toggle" id="langBtn">Русский / English</button>
@@ -278,352 +278,361 @@
     </div>
 
     <script>
-        // Цветовые темы
-        const themes = {
-            default: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-            light: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
-            dark: "linear-gradient(135deg, #2c3e50 0%, #1a1a2e 100%)",
-            ocean: "linear-gradient(135deg, #00c6ff 0%, #0072ff 100%)",
-            sunset: "linear-gradient(135deg, #ff7e5f 0%, #feb47b 100%)",
-            forest: "linear-gradient(135deg, #236a2d 0%, #4a9c5c 100%)",
-            lavender: "linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)",
-            cyber: "linear-gradient(135deg, #000000 0%, #0f9b0f 100%)",
-            mint: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
-            rose: "linear-gradient(135deg, #f857a6 0%, #ff5858 100%)",
-            charcoal: "linear-gradient(135deg, #292929 0%, #1e1e1e 100%)"
-        };
+        document.addEventListener('DOMContentLoaded', () => {
+            // Цветовые темы
+            const themes = {
+                default: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                light: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
+                dark: "linear-gradient(135deg, #2c3e50 0%, #1a1a2e 100%)",
+                ocean: "linear-gradient(135deg, #00c6ff 0%, #0072ff 100%)",
+                sunset: "linear-gradient(135deg, #ff7e5f 0%, #feb47b 100%)",
+                forest: "linear-gradient(135deg, #236a2d 0%, #4a9c5c 100%)",
+                lavender: "linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)",
+                cyber: "linear-gradient(135deg, #000000 0%, #0f9b0f 100%)",
+                mint: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
+                rose: "linear-gradient(135deg, #f857a6 0%, #ff5858 100%)",
+                charcoal: "linear-gradient(135deg, #292929 0%, #1e1e1e 100%)"
+            };
 
-        const translations = {
-            ru: {
-                title: "Типичный день в Америке 2",
-                soundLabel: (mode) => {
-                    const names = { original: "Оригинальный", quiet: "Тихий", nuclear: "ЖЁСТКИЙ бум!" };
-                    return `Текущий звук: ${names[mode]}`;
+            const translations = {
+                ru: {
+                    title: "Типичный день в Америке 2",
+                    soundLabel: (mode) => {
+                        const names = { original: "Оригинальный", quiet: "Тихий", nuclear: "ЖЁСТКИЙ бум!" };
+                        return `Текущий звук: ${names[mode]}`;
+                    },
+                    boomBtn: "Сделать бум!",
+                    restartBtn: "Рестарт",
+                    visitorsLocal: "💡 Счётчик посещений заработает после публикации сайта в интернете",
+                    counter: (n) => `Вы устроили бум ${n} раз(а)`,
+                    disclaimer: `⚠️ Внимание: данный сайт является художественным проектом и не имеет отношения к реальности. Все события, персонажи и высказывания — вымышлены. Автор не призывает к насилию, разрушениям, нарушению закона или любым другим действиям. «Бум» — это метафора, а не руководство к действию.`,
+                    quotes: [
+                        "Бум! Теперь ФБР знает, где ты живёшь.",
+                        "Ещё один бум — и соседи вызовут Национальную гвардию.",
+                        "Ты только что нарушил Закон о тишине в Техасе.",
+                        "В Америке даже бум — это свобода!",
+                        "Поздравляем! Вы получили Green Card... в аду.",
+                        "Этот бум одобрен Конгрессом США.",
+                        "Не волнуйся, это просто дрон с пиццей взорвался.",
+                        "Бум! Теперь у тебя есть право молчать.",
+                        "Ты не бум — ты целая философия.",
+                        "Америка: где бум — это способ сказать 'привет'."
+                    ],
+                    langBtn: "Русский / English",
+                    soundBtn: "Звук",
+                    colorBtn: "Цвета",
+                    musicBtnOn: "Муз. Вкл",
+                    musicBtnOff: "Муз. Выкл"
                 },
-                boomBtn: "Сделать бум!",
-                restartBtn: "Рестарт",
-                visitorsLocal: "💡 Счётчик посещений заработает после публикации сайта в интернете",
-                counter: (n) => `Вы устроили бум ${n} раз(а)`,
-                disclaimer: `⚠️ Внимание: данный сайт является художественным проектом и не имеет отношения к реальности. Все события, персонажи и высказывания — вымышлены. Автор не призывает к насилию, разрушениям, нарушению закона или любым другим действиям. «Бум» — это метафора, а не руководство к действию.`,
-                quotes: [
-                    "Бум! Теперь ФБР знает, где ты живёшь.",
-                    "Ещё один бум — и соседи вызовут Национальную гвардию.",
-                    "Ты только что нарушил Закон о тишине в Техасе.",
-                    "В Америке даже бум — это свобода!",
-                    "Поздравляем! Вы получили Green Card... в аду.",
-                    "Этот бум одобрен Конгрессом США.",
-                    "Не волнуйся, это просто дрон с пиццей взорвался.",
-                    "Бум! Теперь у тебя есть право молчать.",
-                    "Ты не бум — ты целая философия.",
-                    "Америка: где бум — это способ сказать 'привет'."
-                ],
-                langBtn: "Русский / English",
-                soundBtn: "Звук",
-                colorBtn: "Цвета",
-                musicBtnOn: "Муз. Вкл",
-                musicBtnOff: "Муз. Выкл"
-            },
-            en: {
-                title: "A Typical Day in America 2",
-                soundLabel: (mode) => {
-                    const names = { original: "Original", quiet: "Quiet", nuclear: "HARD BOOM!" };
-                    return `Current sound: ${names[mode]}`;
-                },
-                boomBtn: "Make it boom!",
-                restartBtn: "Restart",
-                visitorsLocal: "💡 Visitor counter will work after publishing the site online",
-                counter: (n) => `You've boomed ${n} time(s)`,
-                disclaimer: `⚠️ Disclaimer: This website is a fictional art project. All events, characters, and statements are imaginary. The author does not encourage violence, destruction, law-breaking, or any harmful actions. "Boom" is a metaphor, not a guide.`,
-                quotes: [
-                    "Boom! The FBI now knows where you live.",
-                    "One more boom — and your neighbors will call the National Guard.",
-                    "You just violated the Texas Noise Ordinance.",
-                    "In America, even a boom is freedom!",
-                    "Congratulations! You've received a Green Card... to hell.",
-                    "This boom is approved by the U.S. Congress.",
-                    "Don't worry, it's just a pizza drone exploding.",
-                    "Boom! Now you have the right to remain silent.",
-                    "You're not a boom — you're a whole philosophy.",
-                    "America: where 'boom' is how you say hello."
-                ],
-                langBtn: "English / Русский",
-                soundBtn: "Sound",
-                colorBtn: "Colors",
-                musicBtnOn: "Music On",
-                musicBtnOff: "Music Off"
+                en: {
+                    title: "A Typical Day in America 2",
+                    soundLabel: (mode) => {
+                        const names = { original: "Original", quiet: "Quiet", nuclear: "HARD BOOM!" };
+                        return `Current sound: ${names[mode]}`;
+                    },
+                    boomBtn: "Make it boom!",
+                    restartBtn: "Restart",
+                    visitorsLocal: "💡 Visitor counter will work after publishing the site online",
+                    counter: (n) => `You've boomed ${n} time(s)`,
+                    disclaimer: `⚠️ Disclaimer: This website is a fictional art project. All events, characters, and statements are imaginary. The author does not encourage violence, destruction, law-breaking, or any harmful actions. "Boom" is a metaphor, not a guide.`,
+                    quotes: [
+                        "Boom! The FBI now knows where you live.",
+                        "One more boom — and your neighbors will call the National Guard.",
+                        "You just violated the Texas Noise Ordinance.",
+                        "In America, even a boom is freedom!",
+                        "Congratulations! You've received a Green Card... to hell.",
+                        "This boom is approved by the U.S. Congress.",
+                        "Don't worry, it's just a pizza drone exploding.",
+                        "Boom! Now you have the right to remain silent.",
+                        "You're not a boom — you're a whole philosophy.",
+                        "America: where 'boom' is how you say hello."
+                    ],
+                    langBtn: "English / Русский",
+                    soundBtn: "Sound",
+                    colorBtn: "Colors",
+                    musicBtnOn: "Music On",
+                    musicBtnOff: "Music Off"
+                }
+            };
+
+            let lang = localStorage.getItem('lang') || 'ru';
+            let currentSoundMode = localStorage.getItem('soundMode') || 'original';
+            let currentTheme = localStorage.getItem('colorTheme') || 'default';
+            let isMusicOn = localStorage.getItem('music') !== 'off';
+            let boomCount = parseInt(localStorage.getItem('boomCount')) || 0;
+            let audioContext = null;
+
+            // DOM
+            const titleEl = document.getElementById('title');
+            const soundLabelEl = document.getElementById('sound-label');
+            const visitorsEl = document.getElementById('visitors');
+            const counterEl = document.getElementById('counter');
+            const quoteEl = document.getElementById('quote');
+            const disclaimerEl = document.getElementById('disclaimer');
+            const boomBtn = document.getElementById('boomBtn');
+            const restartBtn = document.getElementById('restartBtn');
+            const langBtn = document.getElementById('langBtn');
+            const soundBtn = document.getElementById('soundBtn');
+            const colorBtn = document.getElementById('colorBtn');
+            const musicBtn = document.getElementById('musicBtn');
+            const soundModal = document.getElementById('soundModal');
+            const colorModal = document.getElementById('colorModal');
+            const closeSoundModal = document.getElementById('closeSoundModal');
+            const closeColorModal = document.getElementById('closeColorModal');
+
+            // Применить тему
+            function applyTheme(themeName) {
+                document.body.style.background = themes[themeName] || themes.default;
+                currentTheme = themeName;
+                localStorage.setItem('colorTheme', themeName);
             }
-        };
 
-        let lang = localStorage.getItem('lang') || 'ru';
-        let currentSoundMode = localStorage.getItem('soundMode') || 'original';
-        let currentTheme = localStorage.getItem('colorTheme') || 'default';
-        let isMusicOn = localStorage.getItem('music') !== 'off';
-        let boomCount = parseInt(localStorage.getItem('boomCount')) || 0;
-        let audioContext = null;
-        let secretCode = [37,39,37,39,38,40,38,40]; // ← → ← → ↑ ↓ ↑ ↓
-        let inputCode = [];
-
-        // DOM
-        const titleEl = document.getElementById('title');
-        const soundLabelEl = document.getElementById('sound-label');
-        const visitorsEl = document.getElementById('visitors');
-        const counterEl = document.getElementById('counter');
-        const quoteEl = document.getElementById('quote');
-        const disclaimerEl = document.getElementById('disclaimer');
-        const boomBtn = document.getElementById('boomBtn');
-        const restartBtn = document.getElementById('restartBtn');
-        const langBtn = document.getElementById('langBtn');
-        const soundBtn = document.getElementById('soundBtn');
-        const colorBtn = document.getElementById('colorBtn');
-        const musicBtn = document.getElementById('musicBtn');
-        const soundModal = document.getElementById('soundModal');
-        const colorModal = document.getElementById('colorModal');
-        const closeSoundModal = document.getElementById('closeSoundModal');
-        const closeColorModal = document.getElementById('closeColorModal');
-
-        // Применить тему
-        function applyTheme(themeName) {
-            document.body.style.background = themes[themeName] || themes.default;
-            currentTheme = themeName;
-            localStorage.setItem('colorTheme', themeName);
-        }
-
-        // Аудио
-        function initAudio() {
-            if (audioContext) return;
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        }
-
-        function playOriginalSound() {
-            if (!audioContext) initAudio();
-            const ctx = audioContext;
-            const t = ctx.currentTime;
-            const duration = 0.3;
-            const bufferSize = ctx.sampleRate * duration;
-            const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-            const output = buffer.getChannelData(0);
-            for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
-            const noise = ctx.createBufferSource(); noise.buffer = buffer;
-            const noiseFilter = ctx.createBiquadFilter(); noiseFilter.type = "lowpass"; noiseFilter.frequency.value = 800;
-            const noiseGain = ctx.createGain(); noiseGain.gain.setValueAtTime(0.6, t); noiseGain.gain.exponentialRampToValueAtTime(0.01, t + duration);
-            noise.connect(noiseFilter); noiseFilter.connect(noiseGain); noiseGain.connect(ctx.destination); noise.start(t);
-            const boom = ctx.createOscillator(); const boomGain = ctx.createGain(); boom.type = "sine"; boom.frequency.setValueAtTime(80, t); boom.frequency.exponentialRampToValueAtTime(20, t + duration); boomGain.gain.setValueAtTime(0.7, t); boomGain.gain.exponentialRampToValueAtTime(0.01, t + duration); boom.connect(boomGain); boomGain.connect(ctx.destination); boom.start(t); boom.stop(t + duration);
-        }
-
-        function playQuietSound() {
-            if (!audioContext) initAudio();
-            const ctx = audioContext;
-            const t = ctx.currentTime;
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(220, t);
-            osc.frequency.exponentialRampToValueAtTime(110, t + 0.25);
-            gain.gain.setValueAtTime(0.5, t);
-            gain.gain.exponentialRampToValueAtTime(0.01, t + 0.3);
-            osc.connect(gain).connect(ctx.destination);
-            osc.start(t);
-            osc.stop(t + 0.3);
-        }
-
-        function playNuclearSound() {
-            if (!audioContext) initAudio();
-            const ctx = audioContext;
-            const t = ctx.currentTime;
-            const sub = ctx.createOscillator(); const subGain = ctx.createGain(); sub.type = 'sine'; sub.frequency.value = 8; subGain.gain.setValueAtTime(0.8, t); subGain.gain.exponentialRampToValueAtTime(0.01, t + 0.6); sub.connect(subGain); subGain.connect(ctx.destination); sub.start(t); sub.stop(t + 0.6);
-            const main = ctx.createOscillator(); const mainGain = ctx.createGain(); main.type = 'sawtooth'; main.frequency.setValueAtTime(100, t); main.frequency.exponentialRampToValueAtTime(30, t + 0.4); mainGain.gain.setValueAtTime(0.7, t); mainGain.gain.exponentialRampToValueAtTime(0.01, t + 0.5); main.connect(mainGain); mainGain.connect(ctx.destination); main.start(t); main.stop(t + 0.5);
-            const bufferSize = ctx.sampleRate * 0.2; const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate); const output = buffer.getChannelData(0); for (let i = 0; i < bufferSize; i++) output[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ctx.sampleRate * 0.1)); const noise = ctx.createBufferSource(); noise.buffer = buffer; const noiseGain = ctx.createGain(); noiseGain.gain.setValueAtTime(0.9, t); noiseGain.gain.exponentialRampToValueAtTime(0.01, t + 0.3); noise.connect(noiseGain); noiseGain.connect(ctx.destination); noise.start(t);
-        }
-
-        function shakeScreen(intensity = 1) {
-            document.body.classList.add('shake');
-            setTimeout(() => document.body.classList.remove('shake'), 600 * intensity);
-        }
-
-        function playBackgroundMusic() {
-            if (!isMusicOn || !audioContext) return;
-            const ctx = audioContext;
-            const t = ctx.currentTime;
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.type = 'sine';
-            osc.frequency.value = 55;
-            gain.gain.value = 0.03;
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.start(t);
-            osc.stop(t + 28);
-            setTimeout(playBackgroundMusic, 27000);
-        }
-
-        function updateText() {
-            const t = translations[lang];
-            titleEl.textContent = t.title;
-            soundLabelEl.textContent = t.soundLabel(currentSoundMode);
-            boomBtn.textContent = t.boomBtn;
-            restartBtn.textContent = t.restartBtn;
-            disclaimerEl.textContent = t.disclaimer;
-            langBtn.textContent = t.langBtn;
-            soundBtn.textContent = t.soundBtn;
-            colorBtn.textContent = t.colorBtn;
-            musicBtn.textContent = isMusicOn ? t.musicBtnOn : t.musicBtnOff;
-            counterEl.textContent = t.counter(boomCount);
-        }
-
-        async function updateVisitorCount() {
-            if (window.location.protocol === 'file:') {
-                visitorsEl.textContent = translations[lang].visitorsLocal;
-                return;
+            // Аудио
+            function initAudio() {
+                if (audioContext) return;
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
             }
-            try {
-                const res = await fetch('https://api.countapi.xyz/hit/tipichny_day_final_v5/visits');
-                const data = await res.json();
-                visitorsEl.textContent = lang === 'ru' ? `Сайт посетили ${data.value} раз(а)` : `Visitors: ${data.value}`;
-            } catch (e) {
-                visitorsEl.textContent = lang === 'ru' ? "Счётчик недоступен" : "Counter unavailable";
-            }
-        }
 
-        function createExplosion(isNuclear = false) {
-            if (isNuclear) {
-                playNuclearSound();
-                shakeScreen(1.5);
-            } else {
-                switch (currentSoundMode) {
-                    case 'quiet': playQuietSound(); break;
-                    case 'nuclear': playNuclearSound(); shakeScreen(); break;
-                    default: playOriginalSound();
+            function playOriginalSound() {
+                if (!audioContext) initAudio();
+                const ctx = audioContext;
+                const t = ctx.currentTime;
+                const duration = 0.3;
+                const bufferSize = ctx.sampleRate * duration;
+                const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+                const output = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
+                const noise = ctx.createBufferSource(); noise.buffer = buffer;
+                const noiseFilter = ctx.createBiquadFilter(); noiseFilter.type = "lowpass"; noiseFilter.frequency.value = 800;
+                const noiseGain = ctx.createGain(); noiseGain.gain.setValueAtTime(0.6, t); noiseGain.gain.exponentialRampToValueAtTime(0.01, t + duration);
+                noise.connect(noiseFilter); noiseFilter.connect(noiseGain); noiseGain.connect(ctx.destination); noise.start(t);
+                const boom = ctx.createOscillator(); const boomGain = ctx.createGain(); boom.type = "sine"; boom.frequency.setValueAtTime(80, t); boom.frequency.exponentialRampToValueAtTime(20, t + duration); boomGain.gain.setValueAtTime(0.7, t); boomGain.gain.exponentialRampToValueAtTime(0.01, t + duration); boom.connect(boomGain); boomGain.connect(ctx.destination); boom.start(t); boom.stop(t + duration);
+            }
+
+            function playQuietSound() {
+                if (!audioContext) initAudio();
+                const ctx = audioContext;
+                const t = ctx.currentTime;
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(220, t);
+                osc.frequency.exponentialRampToValueAtTime(110, t + 0.25);
+                gain.gain.setValueAtTime(0.5, t);
+                gain.gain.exponentialRampToValueAtTime(0.01, t + 0.3);
+                osc.connect(gain).connect(ctx.destination);
+                osc.start(t);
+                osc.stop(t + 0.3);
+            }
+
+            function playNuclearSound() {
+                if (!audioContext) initAudio();
+                const ctx = audioContext;
+                const t = ctx.currentTime;
+                const sub = ctx.createOscillator(); const subGain = ctx.createGain(); sub.type = 'sine'; sub.frequency.value = 8; subGain.gain.setValueAtTime(0.8, t); subGain.gain.exponentialRampToValueAtTime(0.01, t + 0.6); sub.connect(subGain); subGain.connect(ctx.destination); sub.start(t); sub.stop(t + 0.6);
+                const main = ctx.createOscillator(); const mainGain = ctx.createGain(); main.type = 'sawtooth'; main.frequency.setValueAtTime(100, t); main.frequency.exponentialRampToValueAtTime(30, t + 0.4); mainGain.gain.setValueAtTime(0.7, t); mainGain.gain.exponentialRampToValueAtTime(0.01, t + 0.5); main.connect(mainGain); mainGain.connect(ctx.destination); main.start(t); main.stop(t + 0.5);
+                const bufferSize = ctx.sampleRate * 0.2; const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate); const output = buffer.getChannelData(0); for (let i = 0; i < bufferSize; i++) output[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ctx.sampleRate * 0.1)); const noise = ctx.createBufferSource(); noise.buffer = buffer; const noiseGain = ctx.createGain(); noiseGain.gain.setValueAtTime(0.9, t); noiseGain.gain.exponentialRampToValueAtTime(0.01, t + 0.3); noise.connect(noiseGain); noiseGain.connect(ctx.destination); noise.start(t);
+            }
+
+            function shakeScreen(intensity = 1) {
+                document.body.classList.add('shake');
+                setTimeout(() => document.body.classList.remove('shake'), 600 * intensity);
+            }
+
+            function playBackgroundMusic() {
+                if (!isMusicOn || !audioContext) return;
+                const ctx = audioContext;
+                const t = ctx.currentTime;
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.value = 55;
+                gain.gain.value = 0.03;
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(t);
+                osc.stop(t + 28);
+                setTimeout(playBackgroundMusic, 27000);
+            }
+
+            function updateText() {
+                const t = translations[lang];
+                titleEl.textContent = t.title;
+                soundLabelEl.textContent = t.soundLabel(currentSoundMode);
+                boomBtn.textContent = t.boomBtn;
+                restartBtn.textContent = t.restartBtn;
+                disclaimerEl.textContent = t.disclaimer;
+                langBtn.textContent = t.langBtn;
+                soundBtn.textContent = t.soundBtn;
+                colorBtn.textContent = t.colorBtn;
+                musicBtn.textContent = isMusicOn ? t.musicBtnOn : t.musicBtnOff;
+                counterEl.textContent = t.counter(boomCount);
+            }
+
+            async function updateVisitorCount() {
+                if (window.location.protocol === 'file:') {
+                    visitorsEl.textContent = translations[lang].visitorsLocal;
+                    return;
+                }
+                try {
+                    // ИСПРАВЛЕНО: убраны пробелы в конце URL!
+                    const res = await fetch('https://api.countapi.xyz/hit/tipichny_day_final_v5/visits');
+                    const data = await res.json();
+                    visitorsEl.textContent = lang === 'ru' ? `Сайт посетили ${data.value} раз(а)` : `Visitors: ${data.value}`;
+                } catch (e) {
+                    visitorsEl.textContent = lang === 'ru' ? "Счётчик недоступен" : "Counter unavailable";
                 }
             }
 
-            if (boomBtn.disabled && !isNuclear) return;
-            if (!isNuclear) {
-                boomBtn.disabled = true;
-                setTimeout(() => boomBtn.disabled = false, currentSoundMode === 'nuclear' ? 500 : 300);
+            function createExplosion(isNuclear = false) {
+                if (isNuclear) {
+                    playNuclearSound();
+                    shakeScreen(1.5);
+                } else {
+                    switch (currentSoundMode) {
+                        case 'quiet': playQuietSound(); break;
+                        case 'nuclear': playNuclearSound(); shakeScreen(); break;
+                        default: playOriginalSound();
+                    }
+                }
+
+                if (boomBtn.disabled && !isNuclear) return;
+                if (!isNuclear) {
+                    boomBtn.disabled = true;
+                    setTimeout(() => boomBtn.disabled = false, currentSoundMode === 'nuclear' ? 500 : 300);
+                }
+
+                boomCount++;
+                localStorage.setItem('boomCount', boomCount);
+                counterEl.textContent = translations[lang].counter(boomCount);
+
+                const quotes = translations[lang].quotes;
+                const quote = quotes[Math.floor(Math.random() * quotes.length)];
+                quoteEl.style.opacity = 0;
+                setTimeout(() => { quoteEl.textContent = quote; quoteEl.style.opacity = 1; }, 100);
+
+                const rect = isNuclear ? { left: window.innerWidth/2 - 50, top: window.innerHeight/2 - 50, width: 100, height: 100 } : boomBtn.getBoundingClientRect();
+                const count = isNuclear ? 100 : (currentSoundMode === 'nuclear' ? 30 : 20);
+                const maxDist = isNuclear ? 400 : (currentSoundMode === 'nuclear' ? 180 : 100);
+                for (let i = 0; i < count; i++) {
+                    const e = document.createElement('div');
+                    e.className = 'explosion';
+                    const a = Math.random() * Math.PI * 2;
+                    const d = 50 + Math.random() * maxDist;
+                    e.style.left = (rect.left + rect.width/2 + Math.cos(a)*d - window.scrollX) + 'px';
+                    e.style.top = (rect.top + rect.height/2 + Math.sin(a)*d - window.scrollY) + 'px';
+                    e.style.backgroundColor = isNuclear ? '#ff0000' : `hsl(${currentSoundMode === 'nuclear' ? 0 : (Math.random()*60+10)}, 100%, 50%)`;
+                    e.style.animation = `explode ${0.5 + Math.random()*0.5}s forwards`;
+                    document.body.appendChild(e);
+                    setTimeout(() => e.remove(), 1200);
+                }
+
+                if (!isNuclear) {
+                    boomBtn.style.transform = 'scale(0.95)';
+                    setTimeout(() => boomBtn.style.transform = '', 150);
+                }
             }
 
-            boomCount++;
-            localStorage.setItem('boomCount', boomCount);
-            counterEl.textContent = translations[lang].counter(boomCount);
-
-            const quotes = translations[lang].quotes;
-            const quote = quotes[Math.floor(Math.random() * quotes.length)];
-            quoteEl.style.opacity = 0;
-            setTimeout(() => { quoteEl.textContent = quote; quoteEl.style.opacity = 1; }, 100);
-
-            const rect = isNuclear ? { left: window.innerWidth/2 - 50, top: window.innerHeight/2 - 50, width: 100, height: 100 } : boomBtn.getBoundingClientRect();
-            const count = isNuclear ? 100 : (currentSoundMode === 'nuclear' ? 30 : 20);
-            const maxDist = isNuclear ? 400 : (currentSoundMode === 'nuclear' ? 180 : 100);
-            for (let i = 0; i < count; i++) {
-                const e = document.createElement('div');
-                e.className = 'explosion';
-                const a = Math.random() * Math.PI * 2;
-                const d = 50 + Math.random() * maxDist;
-                e.style.left = (rect.left + rect.width/2 + Math.cos(a)*d - window.scrollX) + 'px';
-                e.style.top = (rect.top + rect.height/2 + Math.sin(a)*d - window.scrollY) + 'px';
-                e.style.backgroundColor = isNuclear ? '#ff0000' : `hsl(${currentSoundMode === 'nuclear' ? 0 : (Math.random()*60+10)}, 100%, 50%)`;
-                e.style.animation = `explode ${0.5 + Math.random()*0.5}s forwards`;
-                document.body.appendChild(e);
-                setTimeout(() => e.remove(), 1200);
+            function resetGame() {
+                boomCount = 0;
+                localStorage.setItem('boomCount', '0');
+                counterEl.textContent = translations[lang].counter(0);
+                quoteEl.style.opacity = 0;
+                quoteEl.textContent = '';
+                document.body.classList.add('shake');
+                setTimeout(() => document.body.classList.remove('shake'), 600);
             }
 
-            if (!isNuclear) {
-                boomBtn.style.transform = 'scale(0.95)';
-                setTimeout(() => boomBtn.style.transform = '', 150);
-            }
-        }
+            // Обработчики событий
+            boomBtn.addEventListener('click', () => createExplosion());
+            restartBtn.addEventListener('click', resetGame);
 
-        function resetGame() {
-            boomCount = 0;
-            localStorage.setItem('boomCount', '0');
-            counterEl.textContent = translations[lang].counter(0);
-            quoteEl.style.opacity = 0;
-            quoteEl.textContent = '';
-            document.body.classList.add('shake');
-            setTimeout(() => document.body.classList.remove('shake'), 600);
-        }
-
-        // Обработчики событий
-        boomBtn.addEventListener('click', () => createExplosion());
-        restartBtn.addEventListener('click', resetGame);
-
-        langBtn.addEventListener('click', () => {
-            lang = lang === 'ru' ? 'en' : 'ru';
-            localStorage.setItem('lang', lang);
-            updateText();
-            updateVisitorCount();
-        });
-
-        soundBtn.addEventListener('click', () => {
-            soundModal.style.display = 'block';
-        });
-
-        closeSoundModal.addEventListener('click', () => {
-            soundModal.style.display = 'none';
-        });
-
-        colorBtn.addEventListener('click', () => {
-            colorModal.style.display = 'block';
-        });
-
-        closeColorModal.addEventListener('click', () => {
-            colorModal.style.display = 'none';
-        });
-
-        // Выбор звука
-        document.querySelectorAll('#soundModal input[name="sound"]').forEach(radio => {
-            radio.addEventListener('change', (e) => {
-                currentSoundMode = e.target.value;
-                localStorage.setItem('soundMode', currentSoundMode);
+            langBtn.addEventListener('click', () => {
+                lang = lang === 'ru' ? 'en' : 'ru';
+                localStorage.setItem('lang', lang);
                 updateText();
+                updateVisitorCount();
+            });
+
+            soundBtn.addEventListener('click', () => {
+                soundModal.style.display = 'block';
+            });
+
+            closeSoundModal.addEventListener('click', () => {
                 soundModal.style.display = 'none';
             });
-        });
 
-        // Выбор темы
-        document.querySelectorAll('.color-option').forEach(option => {
-            option.addEventListener('click', () => {
-                const theme = option.dataset.theme;
-                applyTheme(theme);
+            colorBtn.addEventListener('click', () => {
+                colorModal.style.display = 'block';
+            });
+
+            closeColorModal.addEventListener('click', () => {
                 colorModal.style.display = 'none';
             });
-        });
 
-        // Переключение музыки
-        musicBtn.addEventListener('click', () => {
-            isMusicOn = !isMusicOn;
-            localStorage.setItem('music', isMusicOn ? 'on' : 'off');
+            // Выбор звука
+            document.querySelectorAll('#soundModal input[name="sound"]').forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    currentSoundMode = e.target.value;
+                    localStorage.setItem('soundMode', currentSoundMode);
+                    updateText();
+                    soundModal.style.display = 'none';
+                });
+            });
+
+            // Выбор темы
+            document.querySelectorAll('.color-option').forEach(option => {
+                option.addEventListener('click', () => {
+                    const theme = option.dataset.theme;
+                    applyTheme(theme);
+                    colorModal.style.display = 'none';
+                });
+            });
+
+            // Переключение музыки
+            musicBtn.addEventListener('click', () => {
+                isMusicOn = !isMusicOn;
+                localStorage.setItem('music', isMusicOn ? 'on' : 'off');
+                updateText();
+                if (isMusicOn) {
+                    initAudio();
+                    playBackgroundMusic();
+                }
+            });
+
+            // ✅ Konami код: ← → ← → ↑ ↓ ↑ ↓ (современный способ)
+            const secretSequence = ['ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'ArrowUp', 'ArrowDown'];
+            let inputSequence = [];
+
+            document.addEventListener('keydown', (e) => {
+                const key = e.code;
+                if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(key)) return;
+
+                inputSequence.push(key);
+                if (inputSequence.length > secretSequence.length) {
+                    inputSequence.shift();
+                }
+
+                if (inputSequence.join(',') === secretSequence.join(',')) {
+                    createExplosion(true); // Ядерный бум!
+                    inputSequence = [];
+                    console.log("🔥 Konami код активирован!");
+                }
+            });
+
+            // Инициализация
+            applyTheme(currentTheme);
             updateText();
-            if (isMusicOn) {
-                initAudio();
-                playBackgroundMusic();
-            }
+            updateVisitorCount();
+
+            // Запуск фоновой музыки при первом взаимодействии
+            document.body.addEventListener('click', () => {
+                if (isMusicOn && !audioContext) {
+                    initAudio();
+                    playBackgroundMusic();
+                }
+            }, { once: true });
         });
-
-        // Konami код
-        document.addEventListener('keydown', (e) => {
-            inputCode.push(e.keyCode);
-            if (inputCode.length > secretCode.length) {
-                inputCode.shift();
-            }
-            if (inputCode.join(',') === secretCode.join(',')) {
-                createExplosion(true); // Ядерный бум!
-                inputCode = [];
-            }
-        });
-
-        // Инициализация
-        applyTheme(currentTheme);
-        updateText();
-        updateVisitorCount();
-
-        // Запуск фоновой музыки при первом взаимодействии (обход autoplay policy)
-        document.body.addEventListener('click', () => {
-            if (isMusicOn && !audioContext) {
-                initAudio();
-                playBackgroundMusic();
-            }
-        }, { once: true });
     </script>
 </body>
 </html>
