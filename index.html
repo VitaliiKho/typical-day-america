@@ -615,7 +615,7 @@ document.addEventListener('keydown', (e) => {
 
     if (inputSequence.join(',') === secretSequence.join(',')) {
         // Устанавливаем 10 миллионов бумов
-        boomCount = 10000000;
+        boomCount = 100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000;
         localStorage.setItem('boomCount', boomCount.toString());
         counterEl.textContent = translations[lang].counter(boomCount);
 
@@ -646,4 +646,5 @@ document.addEventListener('keydown', (e) => {
     </script>
 </body>
 </html>
+
 
