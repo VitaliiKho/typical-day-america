@@ -31,6 +31,7 @@
             color: var(--text-color);
             text-align: center;
             transition: background 0.4s ease;
+            overflow-x: hidden;
         }
 
         .top-bar {
@@ -50,7 +51,7 @@
             pointer-events: auto;
         }
 
-        .sound-toggle, .theme-toggle, .lang-toggle, .music-toggle {
+        .sound-toggle, .theme-toggle, .lang-toggle, .music-toggle, .color-toggle {
             background: var(--card-bg);
             border: none;
             color: var(--text-color);
@@ -63,7 +64,7 @@
             opacity: 0.85;
         }
 
-        .sound-toggle:hover, .theme-toggle:hover, .lang-toggle:hover, .music-toggle:hover {
+        .sound-toggle:hover, .theme-toggle:hover, .lang-toggle:hover, .music-toggle:hover, .color-toggle:hover {
             opacity: 1;
             transform: scale(1.05);
         }
@@ -125,20 +126,23 @@
             white-space: nowrap;
         }
 
-        .boom-button:hover:not(:disabled) {
-            background: #ff5252;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        .restart-button {
+            background: linear-gradient(to right, #ff416c, #ff4b2b);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.2rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            margin-top: 20px;
+            z-index: 10;
         }
 
-        .boom-button:active:not(:disabled) {
-            transform: translateY(1px);
-        }
-
-        .boom-button:disabled {
-            opacity: 0.7;
-            cursor: not-allowed;
-            transform: none;
+        .restart-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.4);
         }
 
         .explosion {
@@ -159,6 +163,35 @@
             padding: 15px;
         }
 
+        /* Меню цветов */
+        #colorModal {
+            display: none;
+            position: fixed;
+            top: 60px;
+            left: 16px;
+            background: var(--card-bg);
+            padding: 16px;
+            border-radius: 12px;
+            z-index: 200;
+            backdrop-filter: blur(6px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .color-option {
+            display: block;
+            margin: 6px 0;
+            padding: 6px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .color-option:hover {
+            transform: translateX(4px);
+        }
+
         @keyframes pulse {
             0% { transform: scale(1); }
             50% { transform: scale(1.03); }
@@ -172,22 +205,22 @@
 
         @keyframes screenShake {
             0%, 100% { transform: translateX(0); }
-            20% { transform: translateX(-8px); }
-            40% { transform: translateX(8px); }
-            60% { transform: translateX(-5px); }
-            80% { transform: translateX(5px); }
+            20% { transform: translateX(-12px); }
+            40% { transform: translateX(12px); }
+            60% { transform: translateX(-8px); }
+            80% { transform: translateX(8px); }
         }
 
         .shake {
-            animation: screenShake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+            animation: screenShake 0.6s cubic-bezier(.36,.07,.19,.97) both;
         }
 
         @media (max-width: 360px) {
             h1 { font-size: 1.7rem; }
-            .boom-button { font-size: 1.3rem; padding: 12px 30px; }
+            .boom-button, .restart-button { font-size: 1.3rem; padding: 12px 28px; }
             .info { font-size: 1rem; }
             .disclaimer { font-size: 0.78rem; padding: 12px 8px; margin-top: 30px; }
-            .sound-toggle, .theme-toggle, .lang-toggle, .music-toggle {
+            .sound-toggle, .theme-toggle, .lang-toggle, .music-toggle, .color-toggle {
                 font-size: 0.8rem;
                 padding: 5px 10px;
             }
@@ -200,7 +233,7 @@
         <button class="lang-toggle" id="langBtn">Русский / English</button>
         <div style="display:flex;gap:8px;">
             <button class="music-toggle" id="musicBtn">Муз.</button>
-            <button class="theme-toggle" id="themeBtn">Цвет</button>
+            <button class="color-toggle" id="colorBtn">Цвета</button>
         </div>
     </div>
 
@@ -213,6 +246,8 @@
         <div id="quote"></div>
     </div>
 
+    <button class="restart-button" id="restartBtn">Рестарт</button>
+
     <div class="disclaimer" id="disclaimer">
         ⚠️ Внимание: данный сайт является художественным проектом и не имеет отношения к реальности. 
         Все события, персонажи и высказывания — вымышлены. 
@@ -220,15 +255,48 @@
         «Бум» — это метафора, а не руководство к действию.
     </div>
 
+    <!-- Меню звука -->
     <div id="soundModal" style="display:none; position:fixed; top:60px; left:16px; background:var(--card-bg); padding:16px; border-radius:12px; z-index:200; backdrop-filter:blur(6px); box-shadow:0 4px 12px rgba(0,0,0,0.2);">
-        <div style="font-weight:bold; margin-bottom:10px;">Выберите звук:</div>
+        <div style="font-weight:bold; margin-bottom:10px;">Звук:</div>
         <div><label><input type="radio" name="sound" value="original"> Оригинальный</label></div>
         <div><label><input type="radio" name="sound" value="quiet"> Тихий</label></div>
         <div><label><input type="radio" name="sound" value="nuclear"> ЖЁСТКИЙ бум!</label></div>
         <button id="closeSoundModal" style="margin-top:10px; padding:4px 12px; font-size:0.85rem;">Готово</button>
     </div>
 
+    <!-- Меню цветов -->
+    <div id="colorModal">
+        <div style="font-weight:bold; margin-bottom:10px;">Темы:</div>
+        <div class="color-option" data-theme="default">Фиолетовый градиент</div>
+        <div class="color-option" data-theme="light">Светлая</div>
+        <div class="color-option" data-theme="dark">Тёмная</div>
+        <div class="color-option" data-theme="ocean">Океан</div>
+        <div class="color-option" data-theme="sunset">Закат</div>
+        <div class="color-option" data-theme="forest">Лес</div>
+        <div class="color-option" data-theme="lavender">Лаванда</div>
+        <div class="color-option" data-theme="cyber">Киберпанк</div>
+        <div class="color-option" data-theme="mint">Мята</div>
+        <div class="color-option" data-theme="rose">Розовый</div>
+        <div class="color-option" data-theme="charcoal">Уголь</div>
+        <button id="closeColorModal" style="margin-top:10px; padding:4px 12px; font-size:0.85rem;">Готово</button>
+    </div>
+
     <script>
+        // Цветовые темы
+        const themes = {
+            default: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+            light: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
+            dark: "linear-gradient(135deg, #2c3e50 0%, #1a1a2e 100%)",
+            ocean: "linear-gradient(135deg, #00c6ff 0%, #0072ff 100%)",
+            sunset: "linear-gradient(135deg, #ff7e5f 0%, #feb47b 100%)",
+            forest: "linear-gradient(135deg, #236a2d 0%, #4a9c5c 100%)",
+            lavender: "linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)",
+            cyber: "linear-gradient(135deg, #000000 0%, #0f9b0f 100%)",
+            mint: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
+            rose: "linear-gradient(135deg, #f857a6 0%, #ff5858 100%)",
+            charcoal: "linear-gradient(135deg, #292929 0%, #1e1e1e 100%)"
+        };
+
         const translations = {
             ru: {
                 title: "Типичный день в Америке 2",
@@ -237,6 +305,7 @@
                     return `Текущий звук: ${names[mode]}`;
                 },
                 boomBtn: "Сделать бум!",
+                restartBtn: "Рестарт",
                 visitorsLocal: "💡 Счётчик посещений заработает после публикации сайта в интернете",
                 counter: (n) => `Вы устроили бум ${n} раз(а)`,
                 disclaimer: `⚠️ Внимание: данный сайт является художественным проектом и не имеет отношения к реальности. Все события, персонажи и высказывания — вымышлены. Автор не призывает к насилию, разрушениям, нарушению закона или любым другим действиям. «Бум» — это метафора, а не руководство к действию.`,
@@ -254,7 +323,7 @@
                 ],
                 langBtn: "Русский / English",
                 soundBtn: "Звук",
-                themeBtn: "Цвет",
+                colorBtn: "Цвета",
                 musicBtnOn: "Муз. Вкл",
                 musicBtnOff: "Муз. Выкл"
             },
@@ -265,6 +334,7 @@
                     return `Current sound: ${names[mode]}`;
                 },
                 boomBtn: "Make it boom!",
+                restartBtn: "Restart",
                 visitorsLocal: "💡 Visitor counter will work after publishing the site online",
                 counter: (n) => `You've boomed ${n} time(s)`,
                 disclaimer: `⚠️ Disclaimer: This website is a fictional art project. All events, characters, and statements are imaginary. The author does not encourage violence, destruction, law-breaking, or any harmful actions. "Boom" is a metaphor, not a guide.`,
@@ -282,7 +352,7 @@
                 ],
                 langBtn: "English / Русский",
                 soundBtn: "Sound",
-                themeBtn: "Color",
+                colorBtn: "Colors",
                 musicBtnOn: "Music On",
                 musicBtnOff: "Music Off"
             }
@@ -290,11 +360,14 @@
 
         let lang = localStorage.getItem('lang') || 'ru';
         let currentSoundMode = localStorage.getItem('soundMode') || 'original';
-        let isDarkTheme = localStorage.getItem('theme') !== 'light';
+        let currentTheme = localStorage.getItem('colorTheme') || 'default';
         let isMusicOn = localStorage.getItem('music') !== 'off';
         let boomCount = parseInt(localStorage.getItem('boomCount')) || 0;
         let audioContext = null;
+        let secretCode = [37,39,37,39,38,40,38,40]; // ← → ← → ↑ ↓ ↑ ↓
+        let inputCode = [];
 
+        // DOM
         const titleEl = document.getElementById('title');
         const soundLabelEl = document.getElementById('sound-label');
         const visitorsEl = document.getElementById('visitors');
@@ -302,13 +375,24 @@
         const quoteEl = document.getElementById('quote');
         const disclaimerEl = document.getElementById('disclaimer');
         const boomBtn = document.getElementById('boomBtn');
+        const restartBtn = document.getElementById('restartBtn');
         const langBtn = document.getElementById('langBtn');
         const soundBtn = document.getElementById('soundBtn');
-        const themeBtn = document.getElementById('themeBtn');
+        const colorBtn = document.getElementById('colorBtn');
         const musicBtn = document.getElementById('musicBtn');
         const soundModal = document.getElementById('soundModal');
+        const colorModal = document.getElementById('colorModal');
         const closeSoundModal = document.getElementById('closeSoundModal');
+        const closeColorModal = document.getElementById('closeColorModal');
 
+        // Применить тему
+        function applyTheme(themeName) {
+            document.body.style.background = themes[themeName] || themes.default;
+            currentTheme = themeName;
+            localStorage.setItem('colorTheme', themeName);
+        }
+
+        // Аудио
         function initAudio() {
             if (audioContext) return;
             audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -355,10 +439,9 @@
             const bufferSize = ctx.sampleRate * 0.2; const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate); const output = buffer.getChannelData(0); for (let i = 0; i < bufferSize; i++) output[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ctx.sampleRate * 0.1)); const noise = ctx.createBufferSource(); noise.buffer = buffer; const noiseGain = ctx.createGain(); noiseGain.gain.setValueAtTime(0.9, t); noiseGain.gain.exponentialRampToValueAtTime(0.01, t + 0.3); noise.connect(noiseGain); noiseGain.connect(ctx.destination); noise.start(t);
         }
 
-        function shakeScreen() {
-            if (currentSoundMode !== 'nuclear') return;
+        function shakeScreen(intensity = 1) {
             document.body.classList.add('shake');
-            setTimeout(() => document.body.classList.remove('shake'), 400);
+            setTimeout(() => document.body.classList.remove('shake'), 600 * intensity);
         }
 
         function playBackgroundMusic() {
@@ -382,10 +465,11 @@
             titleEl.textContent = t.title;
             soundLabelEl.textContent = t.soundLabel(currentSoundMode);
             boomBtn.textContent = t.boomBtn;
+            restartBtn.textContent = t.restartBtn;
             disclaimerEl.textContent = t.disclaimer;
             langBtn.textContent = t.langBtn;
             soundBtn.textContent = t.soundBtn;
-            themeBtn.textContent = t.themeBtn;
+            colorBtn.textContent = t.colorBtn;
             musicBtn.textContent = isMusicOn ? t.musicBtnOn : t.musicBtnOff;
             counterEl.textContent = t.counter(boomCount);
         }
@@ -396,7 +480,7 @@
                 return;
             }
             try {
-                const res = await fetch('https://api.countapi.xyz/hit/tipichny_day_final_v4/visits');
+                const res = await fetch('https://api.countapi.xyz/hit/tipichny_day_final_v5/visits');
                 const data = await res.json();
                 visitorsEl.textContent = lang === 'ru' ? `Сайт посетили ${data.value} раз(а)` : `Visitors: ${data.value}`;
             } catch (e) {
@@ -404,17 +488,23 @@
             }
         }
 
-        function createExplosion() {
-            switch (currentSoundMode) {
-                case 'quiet': playQuietSound(); break;
-                case 'nuclear': playNuclearSound(); break;
-                default: playOriginalSound();
+        function createExplosion(isNuclear = false) {
+            if (isNuclear) {
+                playNuclearSound();
+                shakeScreen(1.5);
+            } else {
+                switch (currentSoundMode) {
+                    case 'quiet': playQuietSound(); break;
+                    case 'nuclear': playNuclearSound(); shakeScreen(); break;
+                    default: playOriginalSound();
+                }
             }
-            shakeScreen();
 
-            if (boomBtn.disabled) return;
-            boomBtn.disabled = true;
-            setTimeout(() => boomBtn.disabled = false, currentSoundMode === 'nuclear' ? 500 : 300);
+            if (boomBtn.disabled && !isNuclear) return;
+            if (!isNuclear) {
+                boomBtn.disabled = true;
+                setTimeout(() => boomBtn.disabled = false, currentSoundMode === 'nuclear' ? 500 : 300);
+            }
 
             boomCount++;
             localStorage.setItem('boomCount', boomCount);
@@ -425,9 +515,9 @@
             quoteEl.style.opacity = 0;
             setTimeout(() => { quoteEl.textContent = quote; quoteEl.style.opacity = 1; }, 100);
 
-            const rect = boomBtn.getBoundingClientRect();
-            const count = currentSoundMode === 'nuclear' ? 30 : 20;
-            const maxDist = currentSoundMode === 'nuclear' ? 180 : 100;
+            const rect = isNuclear ? { left: window.innerWidth/2 - 50, top: window.innerHeight/2 - 50, width: 100, height: 100 } : boomBtn.getBoundingClientRect();
+            const count = isNuclear ? 100 : (currentSoundMode === 'nuclear' ? 30 : 20);
+            const maxDist = isNuclear ? 400 : (currentSoundMode === 'nuclear' ? 180 : 100);
             for (let i = 0; i < count; i++) {
                 const e = document.createElement('div');
                 e.className = 'explosion';
@@ -435,73 +525,18 @@
                 const d = 50 + Math.random() * maxDist;
                 e.style.left = (rect.left + rect.width/2 + Math.cos(a)*d - window.scrollX) + 'px';
                 e.style.top = (rect.top + rect.height/2 + Math.sin(a)*d - window.scrollY) + 'px';
-                e.style.backgroundColor = `hsl(${currentSoundMode === 'nuclear' ? 0 : (Math.random()*60+10)}, 100%, 50%)`;
+                e.style.backgroundColor = isNuclear ? '#ff0000' : `hsl(${currentSoundMode === 'nuclear' ? 0 : (Math.random()*60+10)}, 100%, 50%)`;
                 e.style.animation = `explode ${0.5 + Math.random()*0.5}s forwards`;
                 document.body.appendChild(e);
-                setTimeout(() => e.remove(), 1000);
+                setTimeout(() => e.remove(), 1200);
             }
 
-            boomBtn.style.transform = 'scale(0.95)';
-            setTimeout(() => boomBtn.style.transform = '', 150);
+            if (!isNuclear) {
+                boomBtn.style.transform = 'scale(0.95)';
+                setTimeout(() => boomBtn.style.transform = '', 150);
+            }
         }
 
-        langBtn.addEventListener('click', () => {
-            lang = lang === 'ru' ? 'en' : 'ru';
-            localStorage.setItem('lang', lang);
-            updateText();
-            updateVisitorCount();
-        });
-
-        themeBtn.addEventListener('click', () => {
-            isDarkTheme = !isDarkTheme;
-            localStorage.setItem('theme', isDarkTheme ? 'dark' : 'light');
-            document.body.classList.toggle('theme-light', !isDarkTheme);
-        });
-
-        musicBtn.addEventListener('click', () => {
-            isMusicOn = !isMusicOn;
-            localStorage.setItem('music', isMusicOn ? 'on' : 'off');
-            updateText();
-            if (isMusicOn) {
-                if (!audioContext) initAudio();
-                playBackgroundMusic();
-            }
-        });
-
-        soundBtn.addEventListener('click', () => {
-            soundModal.style.display = 'block';
-            document.querySelectorAll('input[name="sound"]').forEach(radio => {
-                radio.checked = (radio.value === currentSoundMode);
-            });
-        });
-
-        closeSoundModal.addEventListener('click', () => {
-            const selected = document.querySelector('input[name="sound"]:checked').value;
-            if (selected !== currentSoundMode) {
-                currentSoundMode = selected;
-                localStorage.setItem('soundMode', currentSoundMode);
-                updateText();
-            }
-            soundModal.style.display = 'none';
-        });
-
-        document.addEventListener('click', (e) => {
-            if (soundModal.style.display === 'block' && !soundModal.contains(e.target) && e.target !== soundBtn) {
-                const selected = document.querySelector('input[name="sound"]:checked').value;
-                if (selected !== currentSoundMode) {
-                    currentSoundMode = selected;
-                    localStorage.setItem('soundMode', currentSoundMode);
-                    updateText();
-                }
-                soundModal.style.display = 'none';
-            }
-        });
-
-        boomBtn.addEventListener('click', createExplosion);
-
-        if (!isDarkTheme) document.body.classList.add('theme-light');
-        updateText();
-        updateVisitorCount();
-    </script>
-</body>
+        function resetGame()
 </html>
+
