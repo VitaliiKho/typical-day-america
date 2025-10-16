@@ -44,11 +44,7 @@
             align-items: center;
             padding: 0 16px;
             z-index: 100;
-            pointer-events: none;
-        }
-
-        .top-bar > * {
-            pointer-events: auto;
+            /* УБРАНО: pointer-events: none; — это мешало кликам */
         }
 
         .sound-toggle, .theme-toggle, .lang-toggle, .music-toggle, .color-toggle {
@@ -537,4 +533,97 @@
             }
         }
 
-        function resetGame()
+        function resetGame() {
+            boomCount = 0;
+            localStorage.setItem('boomCount', '0');
+            counterEl.textContent = translations[lang].counter(0);
+            quoteEl.style.opacity = 0;
+            quoteEl.textContent = '';
+            document.body.classList.add('shake');
+            setTimeout(() => document.body.classList.remove('shake'), 600);
+        }
+
+        // Обработчики событий
+        boomBtn.addEventListener('click', () => createExplosion());
+        restartBtn.addEventListener('click', resetGame);
+
+        langBtn.addEventListener('click', () => {
+            lang = lang === 'ru' ? 'en' : 'ru';
+            localStorage.setItem('lang', lang);
+            updateText();
+            updateVisitorCount();
+        });
+
+        soundBtn.addEventListener('click', () => {
+            soundModal.style.display = 'block';
+        });
+
+        closeSoundModal.addEventListener('click', () => {
+            soundModal.style.display = 'none';
+        });
+
+        colorBtn.addEventListener('click', () => {
+            colorModal.style.display = 'block';
+        });
+
+        closeColorModal.addEventListener('click', () => {
+            colorModal.style.display = 'none';
+        });
+
+        // Выбор звука
+        document.querySelectorAll('#soundModal input[name="sound"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                currentSoundMode = e.target.value;
+                localStorage.setItem('soundMode', currentSoundMode);
+                updateText();
+                soundModal.style.display = 'none';
+            });
+        });
+
+        // Выбор темы
+        document.querySelectorAll('.color-option').forEach(option => {
+            option.addEventListener('click', () => {
+                const theme = option.dataset.theme;
+                applyTheme(theme);
+                colorModal.style.display = 'none';
+            });
+        });
+
+        // Переключение музыки
+        musicBtn.addEventListener('click', () => {
+            isMusicOn = !isMusicOn;
+            localStorage.setItem('music', isMusicOn ? 'on' : 'off');
+            updateText();
+            if (isMusicOn) {
+                initAudio();
+                playBackgroundMusic();
+            }
+        });
+
+        // Konami код
+        document.addEventListener('keydown', (e) => {
+            inputCode.push(e.keyCode);
+            if (inputCode.length > secretCode.length) {
+                inputCode.shift();
+            }
+            if (inputCode.join(',') === secretCode.join(',')) {
+                createExplosion(true); // Ядерный бум!
+                inputCode = [];
+            }
+        });
+
+        // Инициализация
+        applyTheme(currentTheme);
+        updateText();
+        updateVisitorCount();
+
+        // Запуск фоновой музыки при первом взаимодействии (обход autoplay policy)
+        document.body.addEventListener('click', () => {
+            if (isMusicOn && !audioContext) {
+                initAudio();
+                playBackgroundMusic();
+            }
+        }, { once: true });
+    </script>
+</body>
+</html>
