@@ -220,17 +220,15 @@
         «Бум» — это метафора, а не руководство к действию.
     </div>
 
-    <!-- Модальное окно выбора звука -->
     <div id="soundModal" style="display:none; position:fixed; top:60px; left:16px; background:var(--card-bg); padding:16px; border-radius:12px; z-index:200; backdrop-filter:blur(6px); box-shadow:0 4px 12px rgba(0,0,0,0.2);">
         <div style="font-weight:bold; margin-bottom:10px;">Выберите звук:</div>
-        <div><label><input type="radio" name="sound" value="original"> Оригинальный</label></div>
+        <div><label><input type="radio" name="sound" value="original" checked> Оригинальный</label></div>
         <div><label><input type="radio" name="sound" value="quiet"> Тихий</label></div>
         <div><label><input type="radio" name="sound" value="nuclear"> ЖЁСТКИЙ бум!</label></div>
         <button id="closeSoundModal" style="margin-top:10px; padding:4px 12px; font-size:0.85rem;">Готово</button>
     </div>
 
     <script>
-        // === Языки ===
         const translations = {
             ru: {
                 title: "Типичный день в Америке 2",
@@ -290,16 +288,13 @@
             }
         };
 
-        // === Состояние ===
         let lang = localStorage.getItem('lang') || 'ru';
         let currentSoundMode = localStorage.getItem('soundMode') || 'original';
         let isDarkTheme = localStorage.getItem('theme') !== 'light';
         let isMusicOn = localStorage.getItem('music') !== 'off';
         let boomCount = parseInt(localStorage.getItem('boomCount')) || 0;
         let audioContext = null;
-        let backgroundMusic = null;
 
-        // === DOM элементы ===
         const titleEl = document.getElementById('title');
         const soundLabelEl = document.getElementById('sound-label');
         const visitorsEl = document.getElementById('visitors');
@@ -314,38 +309,6 @@
         const soundModal = document.getElementById('soundModal');
         const closeSoundModal = document.getElementById('closeSoundModal');
 
-        // === Фоновая музыка (генерация) ===
-        function initBackgroundMusic() {
-            if (!audioContext) initAudio();
-            const ctx = audioContext;
-            const t = ctx.currentTime;
-
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.type = 'sine';
-            osc.frequency.value = 40 + Math.random() * 20;
-            gain.gain.value = 0.05; // очень тихо
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.start(t);
-            osc.stop(t + 30); // играет 30 сек, потом обновится
-
-            // Перезапуск
-            setTimeout(() => {
-                if (isMusicOn) initBackgroundMusic();
-            }, 29000);
-        }
-
-        function toggleMusic() {
-            isMusicOn = !isMusicOn;
-            localStorage.setItem('music', isMusicOn ? 'on' : 'off');
-            updateText();
-            if (isMusicOn) {
-                initBackgroundMusic();
-            }
-        }
-
-        // === Аудио ===
         function initAudio() {
             if (audioContext) return;
             audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -376,7 +339,7 @@
             osc.type = 'sine';
             osc.frequency.setValueAtTime(200, t);
             osc.frequency.exponentialRampToValueAtTime(100, t + 0.25);
-            gain.gain.setValueAtTime(0.4, t); // ↑ громкость, чтобы был слышен
+            gain.gain.setValueAtTime(0.45, t); // достаточно громко, чтобы слышать
             gain.gain.exponentialRampToValueAtTime(0.01, t + 0.3);
             osc.connect(gain).connect(ctx.destination);
             osc.start(t);
@@ -398,4 +361,140 @@
             setTimeout(() => document.body.classList.remove('shake'), 400);
         }
 
-        function updateText()
+        function updateText() {
+            const t = translations[lang];
+            titleEl.textContent = t.title;
+            soundLabelEl.textContent = t.soundLabel(currentSoundMode);
+            boomBtn.textContent = t.boomBtn;
+            disclaimerEl.textContent = t.disclaimer;
+            langBtn.textContent = t.langBtn;
+            soundBtn.textContent = t.soundBtn;
+            themeBtn.textContent = t.themeBtn;
+            musicBtn.textContent = isMusicOn ? t.musicBtnOn : t.musicBtnOff;
+            counterEl.textContent = t.counter(boomCount);
+        }
+
+        async function updateVisitorCount() {
+            if (window.location.protocol === 'file:') {
+                visitorsEl.textContent = translations[lang].visitorsLocal;
+                return;
+            }
+            try {
+                const res = await fetch('https://api.countapi.xyz/hit/tipichny_day_fixed/visits');
+                const data = await res.json();
+                visitorsEl.textContent = `Сайт посетили ${data.value} раз(а)`;
+            } catch (e) {
+                visitorsEl.textContent = "Счётчик недоступен";
+            }
+        }
+
+        function createExplosion() {
+            switch (currentSoundMode) {
+                case 'quiet': playQuietSound(); break;
+                case 'nuclear': playNuclearSound(); break;
+                default: playOriginalSound();
+            }
+            shakeScreen();
+
+            if (boomBtn.disabled) return;
+            boomBtn.disabled = true;
+            setTimeout(() => boomBtn.disabled = false, currentSoundMode === 'nuclear' ? 500 : 300);
+
+            boomCount++;
+            localStorage.setItem('boomCount', boomCount);
+            counterEl.textContent = translations[lang].counter(boomCount);
+
+            const quotes = translations[lang].quotes;
+            const quote = quotes[Math.floor(Math.random() * quotes.length)];
+            quoteEl.style.opacity = 0;
+            setTimeout(() => { quoteEl.textContent = quote; quoteEl.style.opacity = 1; }, 100);
+
+            const rect = boomBtn.getBoundingClientRect();
+            const count = currentSoundMode === 'nuclear' ? 30 : 20;
+            const maxDist = currentSoundMode === 'nuclear' ? 180 : 100;
+            for (let i = 0; i < count; i++) {
+                const e = document.createElement('div');
+                e.className = 'explosion';
+                const a = Math.random() * Math.PI * 2;
+                const d = 50 + Math.random() * maxDist;
+                e.style.left = (rect.left + rect.width/2 + Math.cos(a)*d - window.scrollX) + 'px';
+                e.style.top = (rect.top + rect.height/2 + Math.sin(a)*d - window.scrollY) + 'px';
+                e.style.backgroundColor = `hsl(${currentSoundMode === 'nuclear' ? 0 : (Math.random()*60+10)}, 100%, 50%)`;
+                e.style.animation = `explode ${0.5 + Math.random()*0.5}s forwards`;
+                document.body.appendChild(e);
+                setTimeout(() => e.remove(), 1000);
+            }
+
+            boomBtn.style.transform = 'scale(0.95)';
+            setTimeout(() => boomBtn.style.transform = '', 150);
+        }
+
+        langBtn.addEventListener('click', () => {
+            lang = lang === 'ru' ? 'en' : 'ru';
+            localStorage.setItem('lang', lang);
+            updateText();
+            updateVisitorCount();
+        });
+
+        themeBtn.addEventListener('click', () => {
+            isDarkTheme = !isDarkTheme;
+            localStorage.setItem('theme', isDarkTheme ? 'dark' : 'light');
+            document.body.classList.toggle('theme-light', !isDarkTheme);
+        });
+
+        musicBtn.addEventListener('click', () => {
+            isMusicOn = !isMusicOn;
+            localStorage.setItem('music', isMusicOn ? 'on' : 'off');
+            updateText();
+            if (isMusicOn && audioContext) {
+                const now = audioContext.currentTime;
+                const osc = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+                osc.type = 'sine';
+                osc.frequency.value = 50;
+                gain.gain.value = 0.03;
+                osc.connect(gain);
+                gain.connect(audioContext.destination);
+                osc.start(now);
+                osc.stop(now + 10);
+            }
+        });
+
+        soundBtn.addEventListener('click', () => {
+            soundModal.style.display = 'block';
+            document.querySelectorAll('input[name="sound"]').forEach(radio => {
+                radio.checked = (radio.value === currentSoundMode);
+            });
+        });
+
+        closeSoundModal.addEventListener('click', () => {
+            const selected = document.querySelector('input[name="sound"]:checked').value;
+            if (selected !== currentSoundMode) {
+                currentSoundMode = selected;
+                localStorage.setItem('soundMode', currentSoundMode);
+                updateText();
+            }
+            soundModal.style.display = 'none';
+        });
+
+        document.addEventListener('click', (e) => {
+            if (soundModal.style.display === 'block' && !soundModal.contains(e.target) && e.target !== soundBtn) {
+                const selected = document.querySelector('input[name="sound"]:checked').value;
+                if (selected !== currentSoundMode) {
+                    currentSoundMode = selected;
+                    localStorage.setItem('soundMode', currentSoundMode);
+                    updateText();
+                }
+                soundModal.style.display = 'none';
+            }
+        });
+
+        boomBtn.addEventListener('click', createExplosion);
+
+        // Инициализация
+        if (!isDarkTheme) document.body.classList.add('theme-light');
+        updateText();
+        updateVisitorCount();
+    </script>
+</body>
+</html>
