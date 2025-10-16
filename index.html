@@ -35,15 +35,13 @@
 
         .top-bar {
             position: fixed;
-            top: 8px;
-            left: 8px;
-            right: 8px;
+            top: 12px;
+            left: 0;
+            right: 0;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            flex-wrap: wrap;
-            gap: 6px;
-            padding: 6px;
+            padding: 0 16px;
             z-index: 100;
             pointer-events: none;
         }
@@ -52,36 +50,32 @@
             pointer-events: auto;
         }
 
-        .top-group {
-            display: flex;
-            gap: 6px;
-        }
-
         .sound-toggle, .theme-toggle, .lang-toggle, .music-toggle {
             background: var(--card-bg);
             border: none;
             color: var(--text-color);
-            padding: 5px 10px;
+            padding: 6px 12px;
             border-radius: 20px;
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             cursor: pointer;
             backdrop-filter: blur(4px);
             transition: all 0.2s ease;
             opacity: 0.85;
-            white-space: nowrap;
         }
 
         .sound-toggle:hover, .theme-toggle:hover, .lang-toggle:hover, .music-toggle:hover {
             opacity: 1;
-            transform: scale(1.03);
+            transform: scale(1.05);
         }
 
         .lang-toggle {
-            margin: 0 auto;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
         }
 
         .container {
-            margin-top: 120px;
+            margin-top: 100px;
             max-width: 90%;
             width: 100%;
             z-index: 10;
@@ -188,26 +182,24 @@
             animation: screenShake 0.4s cubic-bezier(.36,.07,.19,.97) both;
         }
 
-        @media (max-width: 400px) {
+        @media (max-width: 360px) {
             h1 { font-size: 1.7rem; }
             .boom-button { font-size: 1.3rem; padding: 12px 30px; }
             .info { font-size: 1rem; }
             .disclaimer { font-size: 0.78rem; padding: 12px 8px; margin-top: 30px; }
             .sound-toggle, .theme-toggle, .lang-toggle, .music-toggle {
-                font-size: 0.75rem;
-                padding: 4px 8px;
+                font-size: 0.8rem;
+                padding: 5px 10px;
             }
         }
     </style>
 </head>
 <body>
     <div class="top-bar">
-        <div class="top-group">
-            <button class="sound-toggle" id="soundBtn">Звук</button>
-        </div>
+        <button class="sound-toggle" id="soundBtn">Изменить звук</button>
         <button class="lang-toggle" id="langBtn">Русский / English</button>
-        <div class="top-group">
-            <button class="music-toggle" id="musicBtn">Муз.</button>
+        <div>
+            <button class="music-toggle" id="musicBtn">Музыка: Вкл</button>
             <button class="theme-toggle" id="themeBtn">Цвет</button>
         </div>
     </div>
@@ -230,7 +222,7 @@
 
     <div id="soundModal" style="display:none; position:fixed; top:60px; left:16px; background:var(--card-bg); padding:16px; border-radius:12px; z-index:200; backdrop-filter:blur(6px); box-shadow:0 4px 12px rgba(0,0,0,0.2);">
         <div style="font-weight:bold; margin-bottom:10px;">Выберите звук:</div>
-        <div><label><input type="radio" name="sound" value="original"> Оригинальный</label></div>
+        <div><label><input type="radio" name="sound" value="original" checked> Оригинальный</label></div>
         <div><label><input type="radio" name="sound" value="quiet"> Тихий</label></div>
         <div><label><input type="radio" name="sound" value="nuclear"> ЖЁСТКИЙ бум!</label></div>
         <button id="closeSoundModal" style="margin-top:10px; padding:4px 12px; font-size:0.85rem;">Готово</button>
@@ -261,10 +253,10 @@
                     "Америка: где бум — это способ сказать 'привет'."
                 ],
                 langBtn: "Русский / English",
-                soundBtn: "Звук",
+                soundBtn: "Изменить звук",
                 themeBtn: "Цвет",
-                musicBtnOn: "Муз. Вкл",
-                musicBtnOff: "Муз. Выкл"
+                musicBtnOn: "Музыка: Вкл",
+                musicBtnOff: "Музыка: Выкл"
             },
             en: {
                 title: "A Typical Day in America 2",
@@ -289,10 +281,10 @@
                     "America: where 'boom' is how you say hello."
                 ],
                 langBtn: "English / Русский",
-                soundBtn: "Sound",
+                soundBtn: "Change sound",
                 themeBtn: "Color",
-                musicBtnOn: "Music On",
-                musicBtnOff: "Music Off"
+                musicBtnOn: "Music: On",
+                musicBtnOff: "Music: Off"
             }
         };
 
@@ -345,9 +337,9 @@
             const osc = ctx.createOscillator();
             const gain = ctx.createGain();
             osc.type = 'sine';
-            osc.frequency.setValueAtTime(220, t);
-            osc.frequency.exponentialRampToValueAtTime(110, t + 0.25);
-            gain.gain.setValueAtTime(0.5, t); // достаточно громко
+            osc.frequency.setValueAtTime(200, t);
+            osc.frequency.exponentialRampToValueAtTime(100, t + 0.25);
+            gain.gain.setValueAtTime(0.45, t); // достаточно громко, чтобы слышать
             gain.gain.exponentialRampToValueAtTime(0.01, t + 0.3);
             osc.connect(gain).connect(ctx.destination);
             osc.start(t);
@@ -369,22 +361,6 @@
             setTimeout(() => document.body.classList.remove('shake'), 400);
         }
 
-        function playBackgroundMusic() {
-            if (!isMusicOn || !audioContext) return;
-            const ctx = audioContext;
-            const t = ctx.currentTime;
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.type = 'sine';
-            osc.frequency.value = 50 + Math.random() * 10;
-            gain.gain.value = 0.03;
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.start(t);
-            osc.stop(t + 25);
-            setTimeout(playBackgroundMusic, 24000);
-        }
-
         function updateText() {
             const t = translations[lang];
             titleEl.textContent = t.title;
@@ -404,11 +380,11 @@
                 return;
             }
             try {
-                const res = await fetch('https://api.countapi.xyz/hit/tipichny_day_final_v2/visits');
+                const res = await fetch('https://api.countapi.xyz/hit/tipichny_day_fixed/visits');
                 const data = await res.json();
-                visitorsEl.textContent = lang === 'ru' ? `Сайт посетили ${data.value} раз(а)` : `Visitors: ${data.value}`;
+                visitorsEl.textContent = `Сайт посетили ${data.value} раз(а)`;
             } catch (e) {
-                visitorsEl.textContent = lang === 'ru' ? "Счётчик недоступен" : "Counter unavailable";
+                visitorsEl.textContent = "Счётчик недоступен";
             }
         }
 
@@ -470,9 +446,17 @@
             isMusicOn = !isMusicOn;
             localStorage.setItem('music', isMusicOn ? 'on' : 'off');
             updateText();
-            if (isMusicOn) {
-                if (!audioContext) initAudio();
-                playBackgroundMusic();
+            if (isMusicOn && audioContext) {
+                const now = audioContext.currentTime;
+                const osc = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+                osc.type = 'sine';
+                osc.frequency.value = 50;
+                gain.gain.value = 0.03;
+                osc.connect(gain);
+                gain.connect(audioContext.destination);
+                osc.start(now);
+                osc.stop(now + 10);
             }
         });
 
