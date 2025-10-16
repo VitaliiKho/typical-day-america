@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Типичный день в Америке 2</title>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --text-color: white;
+            --card-bg: rgba(0,0,0,0.2);
+            --disclaimer-color: rgba(255,255,255,0.7);
+        }
+
+        .theme-light {
+            --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            --text-color: #2c3e50;
+            --card-bg: rgba(255,255,255,0.5);
+            --disclaimer-color: rgba(0,0,0,0.6);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--text-color);
+            text-align: center;
+            transition: background 0.4s ease;
+        }
+
+        .top-bar {
+            position: fixed;
+            top: 12px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 16px;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        .top-bar > * {
+            pointer-events: auto;
+        }
+
+        .sound-toggle, .theme-toggle, .lang-toggle {
+            background: var(--card-bg);
+            border: none;
+            color: var(--text-color);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            backdrop-filter: blur(4px);
+            transition: all 0.2s ease;
+            opacity: 0.85;
+        }
+
+        .sound-toggle:hover, .theme-toggle:hover, .lang-toggle:hover {
+            opacity: 1;
+            transform: scale(1.05);
+        }
+
+        .lang-toggle {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--card-bg);
+        }
+
+        .container {
+            margin-top: 100px;
+            max-width: 90%;
+            width: 100%;
+            z-index: 10;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin: 0 0 12px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            animation: pulse 2s infinite;
+        }
+
+        #sound-label {
+            font-size: 1rem;
+            margin-bottom: 12px;
+            opacity: 0.9;
+        }
+
+        .info {
+            font-size: 1.1rem;
+            margin: 6px 0;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+            line-height: 1.4;
+        }
+
+        #quote {
+            font-style: italic;
+            margin-top: 20px;
+            min-height: 2rem;
+            font-size: 1rem;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            padding: 0 10px;
+        }
+
+        .boom-button {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 14px 36px;
+            font-size: 1.4rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            margin-top: 10px;
+            white-space: nowrap;
+        }
+
+        .boom-button:hover:not(:disabled) {
+            background: #ff5252;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        .boom-button:active:not(:disabled) {
+            transform: translateY(1px);
+        }
+
+        .boom-button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .explosion {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 0;
+        }
+
+        .disclaimer {
+            margin-top: 40px;
+            font-size: 0.82rem;
+            color: var(--disclaimer-color);
+            line-height: 1.5;
+            max-width: 600px;
+            padding: 15px;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes explode {
+            0% { transform: scale(0); opacity: 1; }
+            100% { transform: scale(3); opacity: 0; }
+        }
+
+        @keyframes screenShake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-8px); }
+            40% { transform: translateX(8px); }
+            60% { transform: translateX(-5px); }
+            80% { transform: translateX(5px); }
+        }
+
+        .shake {
+            animation: screenShake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        @media (max-width: 360px) {
+            h1 { font-size: 1.7rem; }
+            .boom-button { font-size: 1.3rem; padding: 12px 30px; }
+            .info { font-size: 1rem; }
+            .disclaimer { font-size: 0.78rem; padding: 12px 8px; margin-top: 30px; }
+            .sound-toggle, .theme-toggle, .lang-toggle {
+                font-size: 0.8rem;
+                padding: 5px 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Верхняя панель -->
+    <div class="top-bar">
+        <button class="sound-toggle" id="soundBtn">Изменить звук</button>
+        <button class="lang-toggle" id="langBtn">Русский / English</button>
+        <button class="theme-toggle" id="themeBtn">Цвет</button>
+    </div>
+
+    <div class="container">
+        <h1 id="title">Типичный день в Америке 2</h1>
+        <div id="sound-label">Текущий звук: Оригинальный</div>
+        <div id="visitors" class="info">Проверка счётчика...</div>
+        <div id="counter" class="info">Вы устроили бум 0 раз(а)</div>
+        <button class="boom-button" id="boomBtn" type="button">Сделать бум!</button>
+        <div id="quote"></div>
+    </div>
+
+    <div class="disclaimer" id="disclaimer">
+        ⚠️ Внимание: данный сайт является художественным проектом и не имеет отношения к реальности. 
+        Все события, персонажи и высказывания — вымышлены. 
+        Автор не призывает к насилию, разрушениям, нарушению закона или любым другим действиям. 
+        «Бум» — это метафора, а не руководство к действию.
+    </div>
+
+    <!-- Модальное окно выбора звука -->
+    <div id="soundModal" style="display:none; position:fixed; top:60px; left:16px; background:var(--card-bg); padding:16px; border-radius:12px; z-index:200; backdrop-filter:blur(6px); box-shadow:0 4px 12px rgba(0,0,0,0.2);">
+        <div style="font-weight:bold; margin-bottom:10px;">Выберите звук:</div>
+        <div><label><input type="radio" name="sound" value="original" checked> Оригинальный</label></div>
+        <div><label><input type="radio" name="sound" value="quiet"> Тихий</label></div>
+        <div><label><input type="radio" name="sound" value="nuclear"> ЖОСКИЙ бум!</label></div>
+        <button id="closeSoundModal" style="margin-top:10px; padding:4px 12px; font-size:0.85rem;">Готово</button>
+    </div>
+
+    <script>
+        // === Языки ===
+        const translations = {
+            ru: {
+                title: "Типичный день в Америке 2",
+                soundLabel: (mode) => {
+                    const names = { original: "Оригинальный", quiet: "Тихий", nuclear: "ЖОСКИЙ бум!" };
+                    return `Текущий звук: ${names[mode]}`;
+                },
+                boomBtn: "Сделать бум!",
+                visitorsLocal: "💡 Счётчик посещений заработает после публикации сайта в интернете",
+                counter: (n) => `Вы устроили бум ${n} раз(а)`,
+                disclaimer: `⚠️ Внимание: данный сайт является художественным проектом и не имеет отношения к реальности. Все события, персонажи и высказывания — вымышлены. Автор не призывает к насилию, разрушениям, нарушению закона или любым другим действиям. «Бум» — это метафора, а не руководство к действию.`,
+                quotes: [
+                    "Бум! Теперь ФБР знает, где ты живёшь.",
+                    "Ещё один бум — и соседи вызовут Национальную гвардию.",
+                    "Ты только что нарушил Закон о тишине в Техасе.",
+                    "В Америке даже бум — это свобода!",
+                    "Поздравляем! Вы получили Green Card... в аду.",
+                    "Этот бум одобрен Конгрессом США.",
+                    "Не волнуйся, это просто дрон с пиццей взорвался.",
+                    "Бум! Теперь у тебя есть право молчать.",
+                    "Ты не бум — ты целая философия.",
+                    "Америка: где бум — это способ сказать 'привет'."
+                ],
+                langBtn: "Русский / English",
+                soundBtn: "Изменить звук",
+                themeBtn: "Цвет"
+            },
+            en: {
+                title: "A Typical Day in America 2",
+                soundLabel: (mode) => {
+                    const names = { original: "Original", quiet: "Quiet", nuclear: "NUCLEAR BOOM!" };
+                    return `Current sound: ${names[mode]}`;
+                },
+                boomBtn: "Make it boom!",
+                visitorsLocal: "💡 Visitor counter will work after publishing the site online",
+                counter: (n) => `You've boomed ${n} time(s)`,
+                disclaimer: `⚠️ Disclaimer: This website is a fictional art project. All events, characters, and statements are imaginary. The author does not encourage violence, destruction, law-breaking, or any harmful actions. "Boom" is a metaphor, not a guide.`,
+                quotes: [
+                    "Boom! The FBI now knows where you live.",
+                    "One more boom — and your neighbors will call the National Guard.",
+                    "You just violated the Texas Noise Ordinance.",
+                    "In America, even a boom is freedom!",
+                    "Congratulations! You've received a Green Card... to hell.",
+                    "This boom is approved by the U.S. Congress.",
+                    "Don't worry, it's just a pizza drone exploding.",
+                    "Boom! Now you have the right to remain silent.",
+                    "You're not a boom — you're a whole philosophy.",
+                    "America: where 'boom' is how you say hello."
+                ],
+                langBtn: "English / Русский",
+                soundBtn: "Change sound",
+                themeBtn: "Color"
+            }
+        };
+
+        // === Состояние ===
+        let lang = 'ru';
+        let currentSoundMode = 'original';
+        let isDarkTheme = true;
+        let boomCount = 0;
+        let audioContext = null;
+
+        // === DOM элементы ===
+        const titleEl = document.getElementById('title');
+        const soundLabelEl = document.getElementById('sound-label');
+        const visitorsEl = document.getElementById('visitors');
+        const counterEl = document.getElementById('counter');
+        const quoteEl = document.getElementById('quote');
+        const disclaimerEl = document.getElementById('disclaimer');
+        const boomBtn = document.getElementById('boomBtn');
+        const langBtn = document.getElementById('langBtn');
+        const soundBtn = document.getElementById('soundBtn');
+        const themeBtn = document.getElementById('themeBtn');
+        const soundModal = document.getElementById('soundModal');
+        const closeSoundModal = document.getElementById('closeSoundModal');
+
+        // === Функции ===
+        function initAudio() {
+            if (audioContext) return;
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+
+        function playOriginalSound() {
+            if (!audioContext) initAudio();
+            const ctx = audioContext;
+            const t = ctx.currentTime;
+            const duration = 0.3;
+            const bufferSize = ctx.sampleRate * duration;
+            const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+            const output = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
+            const noise = ctx.createBufferSource(); noise.buffer = buffer;
+            const noiseFilter = ctx.createBiquadFilter(); noiseFilter.type = "lowpass"; noiseFilter.frequency.value = 800;
+            const noiseGain = ctx.createGain(); noiseGain.gain.setValueAtTime(0.6, t); noiseGain.gain.exponentialRampToValueAtTime(0.01, t + duration);
+            noise.connect(noiseFilter); noiseFilter.connect(noiseGain); noiseGain.connect(ctx.destination); noise.start(t);
+            const boom = ctx.createOscillator(); const boomGain = ctx.createGain(); boom.type = "sine"; boom.frequency.setValueAtTime(80, t); boom.frequency.exponentialRampToValueAtTime(20, t + duration); boomGain.gain.setValueAtTime(0.7, t); boomGain.gain.exponentialRampToValueAtTime(0.01, t + duration); boom.connect(boomGain); boomGain.connect(ctx.destination); boom.start(t); boom.stop(t + duration);
+        }
+
+        function playQuietSound() {
+            if (!audioContext) initAudio();
+            const ctx = audioContext;
+            const t = ctx.currentTime;
+            const osc = ctx.createOscillator(); const gain = ctx.createGain(); osc.type = 'sine'; osc.frequency.setValueAtTime(120, t); osc.frequency.exponentialRampToValueAtTime(60, t + 0.25); gain.gain.setValueAtTime(0.3, t); gain.gain.exponentialRampToValueAtTime(0.01, t + 0.3); osc.connect(gain).connect(ctx.destination); osc.start(t); osc.stop(t + 0.3);
+        }
+
+        function playNuclearSound() {
+            if (!audioContext) initAudio();
+            const ctx = audioContext;
+            const t = ctx.currentTime;
+            const sub = ctx.createOscillator(); const subGain = ctx.createGain(); sub.type = 'sine'; sub.frequency.value = 8; subGain.gain.setValueAtTime(0.8, t); subGain.gain.exponentialRampToValueAtTime(0.01, t + 0.6); sub.connect(subGain); subGain.connect(ctx.destination); sub.start(t); sub.stop(t + 0.6);
+            const main = ctx.createOscillator(); const mainGain = ctx.createGain(); main.type = 'sawtooth'; main.frequency.setValueAtTime(100, t); main.frequency.exponentialRampToValueAtTime(30, t + 0.4); mainGain.gain.setValueAtTime(0.7, t); mainGain.gain.exponentialRampToValueAtTime(0.01, t + 0.5); main.connect(mainGain); mainGain.connect(ctx.destination); main.start(t); main.stop(t + 0.5);
+            const bufferSize = ctx.sampleRate * 0.2; const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate); const output = buffer.getChannelData(0); for (let i = 0; i < bufferSize; i++) output[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ctx.sampleRate * 0.1)); const noise = ctx.createBufferSource(); noise.buffer = buffer; const noiseGain = ctx.createGain(); noiseGain.gain.setValueAtTime(0.9, t); noiseGain.gain.exponentialRampToValueAtTime(0.01, t + 0.3); noise.connect(noiseGain); noiseGain.connect(ctx.destination); noise.start(t);
+        }
+
+        function shakeScreen() {
+            if (currentSoundMode !== 'nuclear') return;
+            document.body.classList.add('shake');
+            setTimeout(() => document.body.classList.remove('shake'), 400);
+        }
+
+        function updateText() {
+            const t = translations[lang];
+            titleEl.textContent = t.title;
+            soundLabelEl.textContent = t.soundLabel(currentSoundMode);
+            boomBtn.textContent = t.boomBtn;
+            disclaimerEl.textContent = t.disclaimer;
+            langBtn.textContent = t.langBtn;
+            soundBtn.textContent = t.soundBtn;
+            themeBtn.textContent = t.themeBtn;
+            counterEl.textContent = t.counter(boomCount);
+        }
+
+        function updateVisitorCount() {
+            if (window.location.protocol === 'file:') {
+                visitorsEl.textContent = translations[lang].visitorsLocal;
+                return;
+            }
+            fetch('https://api.countapi.xyz/hit/tipichny_day_v4/visits')
+                .then(res => res.json())
+                .then(data => { visitorsEl.textContent = `Visitors: ${data.value}`; })
+                .catch(() => { visitorsEl.textContent = "Counter unavailable"; });
+        }
+
+        function createExplosion() {
+            switch (currentSoundMode) {
+                case 'quiet': playQuietSound(); break;
+                case 'nuclear': playNuclearSound(); break;
+                default: playOriginalSound();
+            }
+            shakeScreen();
+
+            if (boomBtn.disabled) return;
+            boomBtn.disabled = true;
+            setTimeout(() => boomBtn.disabled = false, currentSoundMode === 'nuclear' ? 500 : 300);
+
+            boomCount++;
+            counterEl.textContent = translations[lang].counter(boomCount);
+
+            const quotes = translations[lang].quotes;
+            const quote = quotes[Math.floor(Math.random() * quotes.length)];
+            quoteEl.style.opacity = 0;
+            setTimeout(() => { quoteEl.textContent = quote; quoteEl.style.opacity = 1; }, 100);
+
+            const rect = boomBtn.getBoundingClientRect();
+            const count = currentSoundMode === 'nuclear' ? 30 : 20;
+            const maxDist = currentSoundMode === 'nuclear' ? 180 : 100;
+            for (let i = 0; i < count; i++) {
+                const e = document.createElement('div');
+                e.className = 'explosion';
+                const a = Math.random() * Math.PI * 2;
+                const d = 50 + Math.random() * maxDist;
+                e.style.left = (rect.left + rect.width/2 + Math.cos(a)*d - window.scrollX) + 'px';
+                e.style.top = (rect.top + rect.height/2 + Math.sin(a)*d - window.scrollY) + 'px';
+                e.style.backgroundColor = `hsl(${currentSoundMode === 'nuclear' ? 0 : (Math.random()*60+10)}, 100%, 50%)`;
+                e.style.animation = `explode ${0.5 + Math.random()*0.5}s forwards`;
+                document.body.appendChild(e);
+                setTimeout(() => e.remove(), 1000);
+            }
+
+            boomBtn.style.transform = 'scale(0.95)';
+            setTimeout(() => boomBtn.style.transform = '', 150);
+        }
+
+        // === Обработчики ===
+        langBtn.addEventListener('click', () => {
+            lang = lang === 'ru' ? 'en' : 'ru';
+            updateText();
+            updateVisitorCount();
+        });
+
+        themeBtn.addEventListener('click', () => {
+            isDarkTheme = !isDarkTheme;
+            document.body.classList.toggle('theme-light', !isDarkTheme);
+        });
+
+        soundBtn.addEventListener('click', () => {
+            soundModal.style.display = 'block';
+        });
+
+        closeSoundModal.addEventListener('click', () => {
+            soundModal.style.display = 'none';
+            const selected = document.querySelector('input[name="sound"]:checked').value;
+            if (selected !== currentSoundMode) {
+                currentSoundMode = selected;
+                updateText();
+            }
+        });
+
+        // Закрытие модалки по клику вне
+        document.addEventListener('click', (e) => {
+            if (soundModal.style.display === 'block' && !soundModal.contains(e.target) && e.target !== soundBtn) {
+                soundModal.style.display = 'none';
+                const selected = document.querySelector('input[name="sound"]:checked').value;
+                if (selected !== currentSoundMode) {
+                    currentSoundMode = selected;
+                    updateText();
+                }
+            }
+        });
+
+        boomBtn.addEventListener('click', createExplosion);
+
+        // === Инициализация ===
+        updateText();
+        updateVisitorCount();
+    </script>
+</body>
+</html>
