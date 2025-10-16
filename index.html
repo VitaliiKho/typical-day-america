@@ -50,7 +50,7 @@
             pointer-events: auto;
         }
 
-        .sound-toggle, .theme-toggle, .lang-toggle {
+        .sound-toggle, .theme-toggle, .lang-toggle, .music-toggle {
             background: var(--card-bg);
             border: none;
             color: var(--text-color);
@@ -63,7 +63,7 @@
             opacity: 0.85;
         }
 
-        .sound-toggle:hover, .theme-toggle:hover, .lang-toggle:hover {
+        .sound-toggle:hover, .theme-toggle:hover, .lang-toggle:hover, .music-toggle:hover {
             opacity: 1;
             transform: scale(1.05);
         }
@@ -72,7 +72,6 @@
             position: absolute;
             left: 50%;
             transform: translateX(-50%);
-            background: var(--card-bg);
         }
 
         .container {
@@ -188,7 +187,7 @@
             .boom-button { font-size: 1.3rem; padding: 12px 30px; }
             .info { font-size: 1rem; }
             .disclaimer { font-size: 0.78rem; padding: 12px 8px; margin-top: 30px; }
-            .sound-toggle, .theme-toggle, .lang-toggle {
+            .sound-toggle, .theme-toggle, .lang-toggle, .music-toggle {
                 font-size: 0.8rem;
                 padding: 5px 10px;
             }
@@ -196,17 +195,19 @@
     </style>
 </head>
 <body>
-    <!-- Верхняя панель -->
     <div class="top-bar">
         <button class="sound-toggle" id="soundBtn">Изменить звук</button>
         <button class="lang-toggle" id="langBtn">Русский / English</button>
-        <button class="theme-toggle" id="themeBtn">Цвет</button>
+        <div>
+            <button class="music-toggle" id="musicBtn">Музыка: Вкл</button>
+            <button class="theme-toggle" id="themeBtn">Цвет</button>
+        </div>
     </div>
 
     <div class="container">
         <h1 id="title">Типичный день в Америке 2</h1>
         <div id="sound-label">Текущий звук: Оригинальный</div>
-        <div id="visitors" class="info">Проверка счётчика...</div>
+        <div id="visitors" class="info">Загрузка счётчика...</div>
         <div id="counter" class="info">Вы устроили бум 0 раз(а)</div>
         <button class="boom-button" id="boomBtn" type="button">Сделать бум!</button>
         <div id="quote"></div>
@@ -222,9 +223,9 @@
     <!-- Модальное окно выбора звука -->
     <div id="soundModal" style="display:none; position:fixed; top:60px; left:16px; background:var(--card-bg); padding:16px; border-radius:12px; z-index:200; backdrop-filter:blur(6px); box-shadow:0 4px 12px rgba(0,0,0,0.2);">
         <div style="font-weight:bold; margin-bottom:10px;">Выберите звук:</div>
-        <div><label><input type="radio" name="sound" value="original" checked> Оригинальный</label></div>
+        <div><label><input type="radio" name="sound" value="original"> Оригинальный</label></div>
         <div><label><input type="radio" name="sound" value="quiet"> Тихий</label></div>
-        <div><label><input type="radio" name="sound" value="nuclear"> ЖОСКИЙ бум!</label></div>
+        <div><label><input type="radio" name="sound" value="nuclear"> ЖЁСТКИЙ бум!</label></div>
         <button id="closeSoundModal" style="margin-top:10px; padding:4px 12px; font-size:0.85rem;">Готово</button>
     </div>
 
@@ -234,7 +235,7 @@
             ru: {
                 title: "Типичный день в Америке 2",
                 soundLabel: (mode) => {
-                    const names = { original: "Оригинальный", quiet: "Тихий", nuclear: "ЖОСКИЙ бум!" };
+                    const names = { original: "Оригинальный", quiet: "Тихий", nuclear: "ЖЁСТКИЙ бум!" };
                     return `Текущий звук: ${names[mode]}`;
                 },
                 boomBtn: "Сделать бум!",
@@ -255,12 +256,14 @@
                 ],
                 langBtn: "Русский / English",
                 soundBtn: "Изменить звук",
-                themeBtn: "Цвет"
+                themeBtn: "Цвет",
+                musicBtnOn: "Музыка: Вкл",
+                musicBtnOff: "Музыка: Выкл"
             },
             en: {
                 title: "A Typical Day in America 2",
                 soundLabel: (mode) => {
-                    const names = { original: "Original", quiet: "Quiet", nuclear: "NUCLEAR BOOM!" };
+                    const names = { original: "Original", quiet: "Quiet", nuclear: "HARD BOOM!" };
                     return `Current sound: ${names[mode]}`;
                 },
                 boomBtn: "Make it boom!",
@@ -281,16 +284,20 @@
                 ],
                 langBtn: "English / Русский",
                 soundBtn: "Change sound",
-                themeBtn: "Color"
+                themeBtn: "Color",
+                musicBtnOn: "Music: On",
+                musicBtnOff: "Music: Off"
             }
         };
 
         // === Состояние ===
-        let lang = 'ru';
-        let currentSoundMode = 'original';
-        let isDarkTheme = true;
-        let boomCount = 0;
+        let lang = localStorage.getItem('lang') || 'ru';
+        let currentSoundMode = localStorage.getItem('soundMode') || 'original';
+        let isDarkTheme = localStorage.getItem('theme') !== 'light';
+        let isMusicOn = localStorage.getItem('music') !== 'off';
+        let boomCount = parseInt(localStorage.getItem('boomCount')) || 0;
         let audioContext = null;
+        let backgroundMusic = null;
 
         // === DOM элементы ===
         const titleEl = document.getElementById('title');
@@ -303,10 +310,42 @@
         const langBtn = document.getElementById('langBtn');
         const soundBtn = document.getElementById('soundBtn');
         const themeBtn = document.getElementById('themeBtn');
+        const musicBtn = document.getElementById('musicBtn');
         const soundModal = document.getElementById('soundModal');
         const closeSoundModal = document.getElementById('closeSoundModal');
 
-        // === Функции ===
+        // === Фоновая музыка (генерация) ===
+        function initBackgroundMusic() {
+            if (!audioContext) initAudio();
+            const ctx = audioContext;
+            const t = ctx.currentTime;
+
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.value = 40 + Math.random() * 20;
+            gain.gain.value = 0.05; // очень тихо
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(t);
+            osc.stop(t + 30); // играет 30 сек, потом обновится
+
+            // Перезапуск
+            setTimeout(() => {
+                if (isMusicOn) initBackgroundMusic();
+            }, 29000);
+        }
+
+        function toggleMusic() {
+            isMusicOn = !isMusicOn;
+            localStorage.setItem('music', isMusicOn ? 'on' : 'off');
+            updateText();
+            if (isMusicOn) {
+                initBackgroundMusic();
+            }
+        }
+
+        // === Аудио ===
         function initAudio() {
             if (audioContext) return;
             audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -332,7 +371,16 @@
             if (!audioContext) initAudio();
             const ctx = audioContext;
             const t = ctx.currentTime;
-            const osc = ctx.createOscillator(); const gain = ctx.createGain(); osc.type = 'sine'; osc.frequency.setValueAtTime(120, t); osc.frequency.exponentialRampToValueAtTime(60, t + 0.25); gain.gain.setValueAtTime(0.3, t); gain.gain.exponentialRampToValueAtTime(0.01, t + 0.3); osc.connect(gain).connect(ctx.destination); osc.start(t); osc.stop(t + 0.3);
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(200, t);
+            osc.frequency.exponentialRampToValueAtTime(100, t + 0.25);
+            gain.gain.setValueAtTime(0.4, t); // ↑ громкость, чтобы был слышен
+            gain.gain.exponentialRampToValueAtTime(0.01, t + 0.3);
+            osc.connect(gain).connect(ctx.destination);
+            osc.start(t);
+            osc.stop(t + 0.3);
         }
 
         function playNuclearSound() {
@@ -350,111 +398,4 @@
             setTimeout(() => document.body.classList.remove('shake'), 400);
         }
 
-        function updateText() {
-            const t = translations[lang];
-            titleEl.textContent = t.title;
-            soundLabelEl.textContent = t.soundLabel(currentSoundMode);
-            boomBtn.textContent = t.boomBtn;
-            disclaimerEl.textContent = t.disclaimer;
-            langBtn.textContent = t.langBtn;
-            soundBtn.textContent = t.soundBtn;
-            themeBtn.textContent = t.themeBtn;
-            counterEl.textContent = t.counter(boomCount);
-        }
-
-        function updateVisitorCount() {
-            if (window.location.protocol === 'file:') {
-                visitorsEl.textContent = translations[lang].visitorsLocal;
-                return;
-            }
-            fetch('https://api.countapi.xyz/hit/tipichny_day_v4/visits')
-                .then(res => res.json())
-                .then(data => { visitorsEl.textContent = `Visitors: ${data.value}`; })
-                .catch(() => { visitorsEl.textContent = "Counter unavailable"; });
-        }
-
-        function createExplosion() {
-            switch (currentSoundMode) {
-                case 'quiet': playQuietSound(); break;
-                case 'nuclear': playNuclearSound(); break;
-                default: playOriginalSound();
-            }
-            shakeScreen();
-
-            if (boomBtn.disabled) return;
-            boomBtn.disabled = true;
-            setTimeout(() => boomBtn.disabled = false, currentSoundMode === 'nuclear' ? 500 : 300);
-
-            boomCount++;
-            counterEl.textContent = translations[lang].counter(boomCount);
-
-            const quotes = translations[lang].quotes;
-            const quote = quotes[Math.floor(Math.random() * quotes.length)];
-            quoteEl.style.opacity = 0;
-            setTimeout(() => { quoteEl.textContent = quote; quoteEl.style.opacity = 1; }, 100);
-
-            const rect = boomBtn.getBoundingClientRect();
-            const count = currentSoundMode === 'nuclear' ? 30 : 20;
-            const maxDist = currentSoundMode === 'nuclear' ? 180 : 100;
-            for (let i = 0; i < count; i++) {
-                const e = document.createElement('div');
-                e.className = 'explosion';
-                const a = Math.random() * Math.PI * 2;
-                const d = 50 + Math.random() * maxDist;
-                e.style.left = (rect.left + rect.width/2 + Math.cos(a)*d - window.scrollX) + 'px';
-                e.style.top = (rect.top + rect.height/2 + Math.sin(a)*d - window.scrollY) + 'px';
-                e.style.backgroundColor = `hsl(${currentSoundMode === 'nuclear' ? 0 : (Math.random()*60+10)}, 100%, 50%)`;
-                e.style.animation = `explode ${0.5 + Math.random()*0.5}s forwards`;
-                document.body.appendChild(e);
-                setTimeout(() => e.remove(), 1000);
-            }
-
-            boomBtn.style.transform = 'scale(0.95)';
-            setTimeout(() => boomBtn.style.transform = '', 150);
-        }
-
-        // === Обработчики ===
-        langBtn.addEventListener('click', () => {
-            lang = lang === 'ru' ? 'en' : 'ru';
-            updateText();
-            updateVisitorCount();
-        });
-
-        themeBtn.addEventListener('click', () => {
-            isDarkTheme = !isDarkTheme;
-            document.body.classList.toggle('theme-light', !isDarkTheme);
-        });
-
-        soundBtn.addEventListener('click', () => {
-            soundModal.style.display = 'block';
-        });
-
-        closeSoundModal.addEventListener('click', () => {
-            soundModal.style.display = 'none';
-            const selected = document.querySelector('input[name="sound"]:checked').value;
-            if (selected !== currentSoundMode) {
-                currentSoundMode = selected;
-                updateText();
-            }
-        });
-
-        // Закрытие модалки по клику вне
-        document.addEventListener('click', (e) => {
-            if (soundModal.style.display === 'block' && !soundModal.contains(e.target) && e.target !== soundBtn) {
-                soundModal.style.display = 'none';
-                const selected = document.querySelector('input[name="sound"]:checked').value;
-                if (selected !== currentSoundMode) {
-                    currentSoundMode = selected;
-                    updateText();
-                }
-            }
-        });
-
-        boomBtn.addEventListener('click', createExplosion);
-
-        // === Инициализация ===
-        updateText();
-        updateVisitorCount();
-    </script>
-</body>
-</html>
+        function updateText()
